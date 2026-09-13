@@ -1,0 +1,42 @@
+{# ============================== Site footer ============================== #}
+<footer class="site-footer">
+  <div class="container site-footer__inner">
+    <div class="site-footer__brand">
+      <a class="wordmark" href="/">{{ site.title }}</a>
+      <p class="site-footer__tagline">{{ site.tagline }}</p>
+    </div>
+
+    <nav class="site-footer__nav" aria-label="Footer">
+      <ul>
+        {% for item in nav %}
+        <li><a href="{{ item.url }}">{{ item.label }}</a></li>
+        {% endfor %}
+      </ul>
+    </nav>
+
+    <div class="site-footer__social">
+      {% if person.profiles.linkedin %}
+      <a href="{{ person.profiles.linkedin }}" target="_blank" rel="noopener" aria-label="LinkedIn">
+        {% include "partials/icons/linkedin.svg" %}
+      </a>
+      {% endif %}
+      {% if person.profiles.github %}
+      <a href="{{ person.profiles.github }}" target="_blank" rel="noopener" aria-label="GitHub">
+        {% include "partials/icons/github.svg" %}
+      </a>
+      {% endif %}
+      {% if person.email %}
+      <a href="mailto:{{ person.email }}" aria-label="Email">
+        {% include "partials/icons/mail.svg" %}
+      </a>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="site-footer__bottom">
+    <div class="container site-footer__bottom-inner">
+      <p>© {{ null | year }} {{ person.name }}</p>
+      <p>Built with <a href="https://www.11ty.dev/" target="_blank" rel="noopener">Eleventy</a></p>
+    </div>
+  </div>
+</footer>

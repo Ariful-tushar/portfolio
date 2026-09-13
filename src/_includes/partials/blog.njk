@@ -1,0 +1,23 @@
+{# ===================== Latest writing (landing) ===================== #}
+{% if collections.posts | length %}
+<section class="section blog" id="blog">
+  <div class="container">
+    <h2 class="section__title">Latest Writing</h2>
+    <p class="section__subtitle">
+      Notes on AI systems, automation, and lessons from building in production.
+    </p>
+
+    <div class="post-grid">
+      {% for post in collections.posts | limit(3) %}
+        {% include "partials/post-card.njk" %}
+      {% endfor %}
+    </div>
+
+    <div class="section__cta">
+      <a class="btn btn--outline" href="/blog/">
+        View all posts <span aria-hidden="true">→</span>
+      </a>
+    </div>
+  </div>
+</section>
+{% endif %}

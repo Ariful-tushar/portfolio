@@ -1,0 +1,31 @@
+{# ============================== Skills (landing) ============================== #}
+<section class="section skills" id="skills">
+  <div class="container">
+    <h2 class="section__title">Skills &amp; Technologies</h2>
+    <p class="section__subtitle">
+      The tools I use to build reliable AI systems, data pipelines, and automation.
+    </p>
+
+    <ul class="skills__grid">
+      {% for group in skills | limit(4) %}
+      <li class="skill-card">
+        <span class="skill-card__icon" aria-hidden="true">
+          {% include "partials/icons/" + group.icon + ".svg" %}
+        </span>
+        <h3 class="skill-card__title">{{ group.group }}</h3>
+        <ul class="skill-card__tags">
+          {% for item in group.items | limit(6) %}
+          <li>{{ item }}</li>
+          {% endfor %}
+        </ul>
+      </li>
+      {% endfor %}
+    </ul>
+
+    <div class="section__cta">
+      <a class="btn btn--outline" href="/skills/">
+        View all skills <span aria-hidden="true">→</span>
+      </a>
+    </div>
+  </div>
+</section>

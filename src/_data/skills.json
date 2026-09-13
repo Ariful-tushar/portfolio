@@ -1,0 +1,83 @@
+[
+  {
+    "group": "AI & Machine Learning",
+    "icon": "cat-ml",
+    "items": [
+      "Machine Learning",
+      "Deep Learning",
+      "TensorFlow",
+      "PyTorch",
+      "scikit-learn",
+      "Computer Vision",
+      "OpenCV",
+      "YOLO",
+      "Object Detection",
+      "Face Recognition"
+    ]
+  },
+  {
+    "group": "Generative AI & LLMs",
+    "icon": "cat-genai",
+    "items": [
+      "LLMs",
+      "RAG",
+      "LangChain",
+      "LangGraph",
+      "MCP (Model Context Protocol)",
+      "Prompt Engineering",
+      "LLM Orchestration",
+      "OpenAI API",
+      "Claude API"
+    ]
+  },
+  {
+    "group": "Automation & Data Acquisition",
+    "icon": "cat-tools",
+    "items": [
+      "Web Scraping",
+      "Browser Automation",
+      "Playwright",
+      "Selenium",
+      "Requests",
+      "BeautifulSoup",
+      "Scrapy",
+      "n8n",
+      "Data Pipelines",
+      "Data Validation"
+    ]
+  },
+  {
+    "group": "Backend & APIs",
+    "icon": "cat-code",
+    "items": [
+      "Python",
+      "FastAPI",
+      "REST APIs",
+      "SQLAlchemy",
+      "Pydantic",
+      "Google Sheets API",
+      "JSON",
+      "YAML"
+    ]
+  },
+  {
+    "group": "Databases",
+    "icon": "cat-backend",
+    "items": ["SQL", "PostgreSQL"]
+  },
+  {
+    "group": "DevOps & Tooling",
+    "icon": "cat-devops",
+    "items": ["Git", "Docker", "Azure DevOps", "CI/CD", "HTML test fixtures"]
+  },
+  {
+    "group": "IoT & Edge",
+    "icon": "cat-iot",
+    "items": ["IoT", "Raspberry Pi", "Edge Computing", "Text-to-Speech"]
+  },
+  {
+    "group": "Networking & Infrastructure",
+    "icon": "cat-network",
+    "items": ["Networking", "Infrastructure"]
+  }
+]

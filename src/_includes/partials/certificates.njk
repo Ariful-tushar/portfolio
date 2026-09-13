@@ -1,0 +1,69 @@
+{# ===================== Certificates (3D coverflow carousel) ===================== #}
+{% if certificates | length %}
+<section class="section certificates" id="certificates">
+  <div class="container">
+    <h2 class="section__title">Certificates</h2>
+    <p class="section__subtitle">
+      Courses and certifications I've completed — drag, click a card, or use the arrows.
+    </p>
+
+    <div class="cert-coverflow" data-cert-carousel>
+      <button
+        class="cert-coverflow__nav cert-coverflow__nav--prev"
+        type="button"
+        data-cert-prev
+        aria-label="Previous certificate"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+
+      <ul class="cert-coverflow__stage" data-cert-track>
+        {% for cert in certificates %}
+        {% set img = "/" + (cert.path | replace("certificates/", "assets/certificates/")) %}
+        <li>
+          <a class="cert-coverflow__card" href="/certificates/" draggable="false">
+            <span class="cert-coverflow__media">
+              <img
+                src="{{ img }}"
+                alt="{{ cert.name }} certificate"
+                loading="lazy"
+                draggable="false"
+                onerror="this.onerror=null;this.src='/assets/img/cert-placeholder.svg'"
+              />
+            </span>
+            <span class="cert-coverflow__body">
+              <span class="cert-coverflow__name">{{ cert.name }}</span>
+              <span class="cert-coverflow__summary">{{ cert.content }}</span>
+            </span>
+            <span class="cert-coverflow__view" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
+            </span>
+          </a>
+        </li>
+        {% endfor %}
+      </ul>
+
+      <button
+        class="cert-coverflow__nav cert-coverflow__nav--next"
+        type="button"
+        data-cert-next
+        aria-label="Next certificate"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+    </div>
+
+    <div class="cert-coverflow__dots" data-cert-dots aria-hidden="true">
+      {% for cert in certificates %}
+      <span class="cert-coverflow__dot"></span>
+      {% endfor %}
+    </div>
+
+    <div class="section__cta">
+      <a class="btn btn--outline" href="/certificates/">
+        See all certificates <span aria-hidden="true">→</span>
+      </a>
+    </div>
+  </div>
+</section>
+{% endif %}

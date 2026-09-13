@@ -1,0 +1,28 @@
+---
+layout: base.njk
+permalink: /skills/
+title: Skills
+description: The full set of tools, technologies, and areas Md Ariful Islam works in — AI, LLMs, automation, data acquisition, backend, and more.
+---
+<section class="section">
+  <div class="container skills-page">
+    <p class="about-page__eyebrow">Skills</p>
+    <h1 class="skills-page__heading">Skills &amp; Technologies</h1>
+    <p class="skills-page__intro">
+      From production AI and RAG pipelines to browser automation and large-scale
+      data acquisition for enterprise SaaS — the tools, technologies, and areas
+      I work in.
+    </p>
+
+    {% for group in skills %}
+    <section class="cv-section">
+      <h2>{{ group.group }}</h2>
+      <ul class="skill-list">
+        {% for item in group.items %}
+        <li>{{ item }}</li>
+        {% endfor %}
+      </ul>
+    </section>
+    {% endfor %}
+  </div>
+</section>

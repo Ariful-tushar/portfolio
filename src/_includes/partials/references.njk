@@ -1,0 +1,67 @@
+{# ============================== References ============================== #}
+{% if collections.references | length %}
+<section class="section references" id="references">
+  <div class="container">
+    <h2 class="section__title">References</h2>
+    <p class="section__subtitle">
+      People I've worked with who can speak to my work.
+    </p>
+
+    <div class="reference-grid">
+      {% for ref in collections.references %}
+      {% set r = ref.data %}
+      {% set refImg = "/" + (r.photo | replace("references/", "assets/references/")) %}
+      <article class="reference-card">
+        <div class="reference-card__head">
+          <img
+            class="reference-card__avatar"
+            src="{{ refImg }}"
+            alt="{{ r.name }}"
+            width="72"
+            height="72"
+            loading="lazy"
+            onerror="this.onerror=null;this.src='/assets/img/ref-placeholder.svg'"
+          />
+          <div>
+            <h3 class="reference-card__name">{{ r.name }}</h3>
+            <p class="reference-card__role">{{ r.role }}{% if r.location %} · {{ r.location }}{% endif %}</p>
+          </div>
+        </div>
+
+        <p class="reference-card__relationship">{{ r.relationship }}</p>
+
+        <ul class="reference-card__contact">
+          {% if r.email %}
+          <li>
+            <a href="mailto:{{ r.email }}">
+              {% include "partials/icons/mail.svg" %}<span>{{ r.email }}</span>
+            </a>
+          </li>
+          {% endif %}
+          {% if r.linkedin %}
+          <li>
+            <a href="{{ r.linkedin }}" target="_blank" rel="noopener">
+              {% include "partials/icons/linkedin.svg" %}<span>LinkedIn</span>
+            </a>
+          </li>
+          {% endif %}
+          {% if r.phone %}
+          <li>
+            {% if r.phone | isPhoneNumber %}
+            <a href="{{ r.phone | telHref }}">
+              {% include "partials/icons/phone.svg" %}<span>{{ r.phone }}</span>
+            </a>
+            {% else %}
+            <span class="reference-card__note">
+              {% include "partials/icons/phone.svg" %}<span>{{ r.phone }}</span>
+            </span>
+            {% endif %}
+          </li>
+          {% endif %}
+        </ul>
+      </article>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}

@@ -1,0 +1,7 @@
+node_modules
+_site
+README.md
+Portfolio_structure.text
+.chrome-t
+.chrome-test
+**/.chrome-*

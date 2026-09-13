@@ -1,0 +1,24 @@
+---
+layout: base.njk
+permalink: /blog/
+title: Blog
+description: Writing by Md Ariful Islam on AI systems, automation, and building reliable software.
+---
+<section class="section">
+  <div class="container">
+    <h1 class="section__title">Blog</h1>
+    <p class="section__subtitle">
+      Notes on AI systems, automation, and lessons from building in production.
+    </p>
+
+    {% if collections.posts | length %}
+    <div class="post-grid">
+      {% for post in collections.posts %}
+        {% include "partials/post-card.njk" %}
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="blog__empty">No posts yet — check back soon.</p>
+    {% endif %}
+  </div>
+</section>

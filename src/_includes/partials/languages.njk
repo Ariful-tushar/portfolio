@@ -1,0 +1,16 @@
+{# ============================== Languages ============================== #}
+{% if languages | length %}
+<section class="section languages" id="languages">
+  <div class="container">
+    <h2 class="section__title">Languages</h2>
+    <ul class="language-list">
+      {% for lang in languages %}
+      <li class="language-item">
+        <span class="language-item__name">{{ lang.name }}</span>
+        <span class="language-item__level">{{ lang.level }}</span>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+</section>
+{% endif %}

@@ -1,0 +1,40 @@
+{
+  "name": "Md Ariful Islam",
+  "title": "AI Developer | AI Automation | Data Acquisition Engineer",
+  "location": "Jyväskylä, Finland",
+  "email": "arifultusharr@gmail.com",
+  "phone": "+358449540614",
+  "openToWork": true,
+  "profiles": {
+    "linkedin": "https://linkedin.com/in/arifulislam2",
+    "github": "https://github.com/Ariful-tushar"
+  },
+  "hero": {
+    "greeting": "Hi, I'm",
+    "name": "Md Ariful Islam",
+    "lines": [
+      "AI Automation Engineer with 6+ years of software engineering experience.",
+      "I build reliable LLM, RAG, and data-pipeline systems that turn messy real-world data into measurable business impact."
+    ],
+    "photo": "/assets/img/photo.png",
+    "photoAlt": "Portrait of Md Ariful Islam",
+    "chips": [
+      { "label": "Python", "icon": "python" },
+      { "label": "PyTorch", "icon": "pytorch" },
+      { "label": "LangChain", "icon": "langchain" },
+      { "label": "FastAPI", "icon": "fastapi" },
+      { "label": "Docker", "icon": "docker" },
+      { "label": "PostgreSQL", "icon": "postgresql" }
+    ]
+  },
+  "summary": "Python Automation Engineer with 2+ years of experience building production-grade data pipelines and automation solutions for enterprise SaaS platforms, including shipping 729+ Python modules to production at MARKT-PILOT while contributing to a ~70% reduction in post-release defects. Delivered AI-powered automation through 700+ freelance projects (4.9/5 rating) using LLMs, RAG, LangChain, and LangGraph to solve real-world business challenges. Currently pursuing an MSc in Artificial Intelligence at the University of Jyväskylä, with a focus on building reliable AI systems that deliver measurable business impact.",
+  "cv": "/assets/cv/Md_Ariful_Islam.pdf",
+  "about": {
+    "heading": "About Me",
+    "paragraphs": [
+      "Python Automation Engineer with 2+ years of experience building production-grade data pipelines and automation solutions for enterprise SaaS platforms, including shipping 729+ Python modules to production at MARKT-PILOT while contributing to a ~70% reduction in post-release defects.",
+      "Delivered AI-powered automation through 700+ freelance projects (4.9/5 rating) using LLMs, RAG, LangChain, and LangGraph to solve real-world business challenges.",
+      "Currently pursuing an MSc in Artificial Intelligence at the University of Jyväskylä, with a focus on building reliable AI systems that deliver measurable business impact."
+    ]
+  }
+}

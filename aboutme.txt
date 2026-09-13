@@ -1,0 +1,21 @@
+Hi, I'm Md Ariful Islam.
+
+I’m an AI Developer, Python Automation & Data Acquisition Engineer based in Jyväskylä, Finland, with experience spanning AI, machine learning, IoT, automation, backend development, and data engineering. My core expertise lies in building practical, production-ready solutions with Python, AI/ML, LLMs, RAG, LangChain, LangGraph, data pipelines, web automation, and backend systems. At MARKT-PILOT, I have developed and deployed 729+ production-grade Python data extraction modules and built scalable data acquisition and automation pipelines for an enterprise SaaS platform.
+
+Currently, I am pursuing my second Master's degree, an MSc in Artificial Intelligence at the University of Jyväskylä. Before this, I completed my first Master's degree in Computer Science, specializing in Data Science, in 2026. My academic journey has allowed me to combine my industry experience with deeper knowledge of AI, machine learning, data science, and intelligent systems.
+
+My Journey
+
+My professional journey started in 2017, after completing my Bachelor's degree in 2016. I began my career as a Network Engineer at Tele-Exchange Ltd. in Bangladesh, where I spent around two and a half years building my foundation in networking, infrastructure, and technology.
+
+In September 2019, I took a major step into the world of AI and IoT, joining ArolloTech Ltd. as an IoT & AI Developer. There, I worked on an intelligent smart-eyewear system combining computer vision, AI, IoT, and edge computing. The project, Imagine ALO, was developed to assist visually impaired people, and I contributed to the development of its AI-powered smart-eyewear prototype. The project also secured a 1,000,000 BDT government innovation grant.
+
+In 2020, I started another important chapter of my career as a freelance Python engineer. Over the years, I have completed 700+ projects for international clients, working on automation, APIs, data processing, backend systems, AI applications, and custom Python solutions. This experience taught me something that formal education cannot fully teach: how to understand ambiguous real-world problems, communicate directly with clients, and turn an idea into a working solution. My freelance work has maintained a 4.9/5 rating.
+
+In 2024, I joined MARKT-PILOT as a Data Acquisition and Automation Engineer, where I continue to work remotely as a freelancer. My work focuses on building reliable data acquisition systems, browser automation, web scraping, structured data pipelines, validation, and production automation using technologies such as Python, Playwright, Selenium, Requests, BeautifulSoup, Azure DevOps, and CI/CD.
+
+Today, my journey has brought together all these experiences — networking, IoT, AI, freelancing, software engineering, automation, data acquisition, and academic research — into one direction: building intelligent software that solves real-world problems.
+
+I’m particularly interested in the intersection of AI and software engineering, where AI is not just a model or an experiment, but a reliable part of a production system.
+
+And this is still just the beginning.

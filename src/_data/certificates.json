@@ -1,0 +1,67 @@
+[
+  {
+    "name": "Team & Client",
+    "content": "Multidisciplinary Business Project (6 ECTS) at the University of Jyväskylä, issued Jun 2026. Collaborated in a multidisciplinary team to deliver a market expansion strategy for Quteo Oy, a Finnish software company — conducting market research, competitor analysis, industry analysis, and strategic recommendations for expansion into the Nordic countries and Poland. Skills: Business Analysis, Market Research, +8 skills.",
+    "path": "certificates/Team_and_Client_Certificate.png"
+  },
+  {
+    "name": "JavaScript (Basic)",
+    "content": "HackerRank certification, issued Sep 2020. Credential ID f57a23e02bc4. Skills: Web Development.",
+    "path": "certificates/JavaScript_Basic_HackerRank.png"
+  },
+  {
+    "name": "Problem Solving (Basic)",
+    "content": "HackerRank certification, issued Jun 2020. Credential ID 4e3eca146930. Skills: Analytical Skills.",
+    "path": "certificates/Problem_Solving_Basic_HackerRank.png"
+  },
+  {
+    "name": "Python (Basic)",
+    "content": "HackerRank certification, issued Sep 2020. Credential ID 9d2209262dff. Skills: PostgreSQL, Neural Networks, +1 skill.",
+    "path": "certificates/Python_Basic_HackerRank.png"
+  },
+  {
+    "name": "HTML, CSS, and Javascript for Web Developers",
+    "content": "Coursera course certificate (Johns Hopkins University), issued Aug 2020. Credential ID PFR7DV2YRSVN. Skills: Web Development.",
+    "path": "certificates/HTML_CSS_JS_WebDevelopers_Coursera.png"
+  },
+  {
+    "name": "Introduction to HTML5",
+    "content": "Coursera course certificate (University of Michigan), issued Jul 2020. Credential ID XA5XKDU97VP7. Skills: Web Development.",
+    "path": "certificates/Introduction_to_HTML5_Coursera.png"
+  },
+  {
+    "name": "Python Data Structures",
+    "content": "Coursera course certificate (University of Michigan), issued Jun 2020. Credential ID CX5U9Q75SM2L.",
+    "path": "certificates/Python_Data_Structures_Coursera.png"
+  },
+  {
+    "name": "Computer Vision Nanodegree",
+    "content": "Udacity Nanodegree certificate, issued Jun 2020. Credential ID AHT5UGHJ. Skills: Keras, Neural Networks, +1 skill.",
+    "path": "certificates/Computer_Vision_Nanodegree_Udacity.png"
+  },
+  {
+    "name": "The Raspberry Pi Platform and Python Programming for the Raspberry Pi",
+    "content": "Coursera course certificate (University of California, Irvine), issued Mar 2020. Credential ID 6TQZG936QCZ6.",
+    "path": "certificates/Raspberry_Pi_Platform_Python_Coursera.png"
+  },
+  {
+    "name": "Programming for Everybody (Getting Started with Python)",
+    "content": "Coursera course certificate (University of Michigan), issued Feb 2020. Credential ID 7KCJKBMV8VJN. Skills: SQL.",
+    "path": "certificates/Programming_for_Everybody_Coursera.png"
+  },
+  {
+    "name": "The Arduino Platform and C Programming",
+    "content": "Coursera course certificate (University of California, Irvine), issued Jan 2020. Credential ID BWLXRD8KRSYA.",
+    "path": "certificates/Arduino_Platform_C_Programming_Coursera.png"
+  },
+  {
+    "name": "Interfacing with the Arduino",
+    "content": "Coursera course certificate (University of California, Irvine), issued Jan 2020. Credential ID QPCJ55E32GCH.",
+    "path": "certificates/Interfacing_with_Arduino_Coursera.png"
+  },
+  {
+    "name": "Introduction to the Internet of Things and Embedded Systems",
+    "content": "Coursera course certificate (University of California, Irvine), issued Nov 2019. Credential ID 6EPAVK3HGNAU.",
+    "path": "certificates/Intro_IoT_Embedded_Systems_Coursera.png"
+  }
+]

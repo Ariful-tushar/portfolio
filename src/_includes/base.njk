@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="{{ site.lang }}">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{% if title %}{{ title }} · {{ site.title }}{% else %}{{ site.title }} · {{ site.tagline }}{% endif %}</title>
+    <meta name="description" content="{{ description or site.description }}" />
+    <link rel="icon" type="image/svg+xml" href="/assets/img/favicon.svg" />
+
+    {% set pageTitle = title or (site.title + " · " + site.tagline) %}
+    {% set pageDescription = description or site.description %}
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="{{ pageTitle }}" />
+    <meta property="og:description" content="{{ pageDescription }}" />
+    {% if site.url %}<meta property="og:url" content="{{ site.url }}{{ page.url }}" />{% endif %}
+    <meta property="og:image" content="{{ site.url }}/assets/img/photo.png" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="{{ pageTitle }}" />
+    <meta name="twitter:description" content="{{ pageDescription }}" />
+    <meta name="twitter:image" content="{{ site.url }}/assets/img/photo.png" />
+    <script>
+      // Set the theme before first paint to avoid a flash.
+      (function () {
+        try {
+          var stored = localStorage.getItem("theme");
+          document.documentElement.setAttribute(
+            "data-theme",
+            stored === "light" || stored === "dark" ? stored : "dark"
+          );
+        } catch (e) {
+          document.documentElement.setAttribute("data-theme", "dark");
+        }
+      })();
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@500;600;700;800&display=swap"
+    />
+    <link rel="stylesheet" href="/assets/css/style.css" />
+  </head>
+  <body>
+    {# ===== HEADER / NAV — built in Phase 2 ===== #}
+    {% include "partials/header.njk" ignore missing %}
+
+    <main id="main">
+      {{ content | safe }}
+    </main>
+
+    {# ===== FOOTER — built in Phase 2 ===== #}
+    {% include "partials/footer.njk" ignore missing %}
+
+    {# ===== Future RAG chat widget mounts here (script + container only) ===== #}
+    {% include "partials/chat-widget.njk" ignore missing %}
+
+    <script src="/assets/js/nav.js" defer></script>
+  </body>
+</html>

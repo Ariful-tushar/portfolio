@@ -1,0 +1,47 @@
+[
+  {
+    "company": "Markt-Pilot",
+    "role": "Data Acquisition and Automation Engineer",
+    "start": "05/2024",
+    "end": "Present",
+    "location": "Germany (Remote)",
+    "bullets": [
+      "Authored and deployed 729+ production-grade Python data extraction modules (Python, YAML, HTML test fixtures) for a live enterprise SaaS platform, continuously expanding automated spare-parts discovery and structured product data pipelines.",
+      "Reduced post-release defects by ~70% through rigorous code reviews, enhanced validation logic, Azure DevOps CI/CD maintenance, and proactive production issue resolution.",
+      "Built scalable Python data pipelines and browser automation solutions using Playwright, Selenium, Requests, and BeautifulSoup, delivering reliable structured data for customer-facing search and accelerating new customer integrations."
+    ]
+  },
+  {
+    "company": "Fiverr (Freelance)",
+    "role": "Freelance Python Developer",
+    "start": "12/2020",
+    "end": "Present",
+    "location": "Remote",
+    "bullets": [
+      "Delivered 700+ production-ready Python solutions for 200+ international clients (4.9/5 rating, 33% repeat-client rate), developing applications involving SQL, REST APIs, automation, data processing, and backend engineering.",
+      "Built AI-powered applications using OpenAI APIs, Claude, LangChain, RAG, prompt engineering, and LLM orchestration to automate business workflows and solve real-world customer challenges.",
+      "Partnered directly with clients to transform ambiguous requirements into scalable software and rapid production-ready prototypes through end-to-end solution design and delivery."
+    ]
+  },
+  {
+    "company": "ArolloTech Ltd",
+    "role": "IoT & AI Developer",
+    "start": "09/2019",
+    "end": "12/2020",
+    "location": "Dhaka, Bangladesh",
+    "bullets": [
+      "Improved computer vision scene detection performance by up to 87% by optimizing AI-based image processing pipelines for an intelligent IoT monitoring solution.",
+      "Co-managed a 1,000,000 BDT government innovation grant, developing an AI-powered smart eyewear prototype and collaborating across multidisciplinary teams to deliver production-ready features."
+    ]
+  },
+  {
+    "company": "Tele-Exchange Ltd",
+    "role": "Network Engineer",
+    "start": "02/2017",
+    "end": "08/2019",
+    "location": "Dhaka, Bangladesh",
+    "bullets": [
+      "PLACEHOLDER — add 1-3 real bullet points about your responsibilities/achievements in this role (e.g. network design, maintenance, troubleshooting, systems supported)."
+    ]
+  }
+]

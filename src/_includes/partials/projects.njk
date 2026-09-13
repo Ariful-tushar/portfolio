@@ -1,0 +1,55 @@
+{# ===================== Featured projects (landing) — 3-up sliding carousel ===================== #}
+{% set all = collections.projects %}
+{% if all | length %}
+<section class="section projects" id="projects">
+  <div class="container">
+    <h2 class="section__title">Featured Projects</h2>
+    <p class="section__subtitle">
+      A few things I've built — slide through with the arrows or drag.
+    </p>
+
+    <div class="project-carousel" data-project-carousel>
+      <button
+        class="project-carousel__nav project-carousel__nav--prev"
+        type="button"
+        data-project-prev
+        aria-label="Previous projects"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+
+      <div class="project-carousel__viewport" data-project-viewport>
+        <ul class="project-carousel__track" data-project-track>
+          {% set tagLimit = 4 %}
+          {% for project in all %}
+          <li>
+            {% include "partials/project-card.njk" %}
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+
+      <button
+        class="project-carousel__nav project-carousel__nav--next"
+        type="button"
+        data-project-next
+        aria-label="Next projects"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+    </div>
+
+    <div class="project-carousel__dots" data-project-dots aria-hidden="true">
+      {% for project in all %}
+      <span class="project-carousel__dot"></span>
+      {% endfor %}
+    </div>
+
+    <div class="section__cta">
+      <a class="btn btn--outline" href="/projects/">
+        View all projects <span aria-hidden="true">→</span>
+      </a>
+    </div>
+  </div>
+</section>
+{% endif %}

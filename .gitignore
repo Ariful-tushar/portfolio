@@ -1,0 +1,8 @@
+node_modules/
+_site/
+.DS_Store
+.chrome-t/
+.chrome-test/
+
+# Unrelated design reference mockup (not this site's content) — kept locally, not published
+design.webp

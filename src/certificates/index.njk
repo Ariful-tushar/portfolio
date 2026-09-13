@@ -1,0 +1,36 @@
+---
+layout: base.njk
+permalink: /certificates/
+title: Certificates
+description: Courses and certifications completed by Md Ariful Islam — from HackerRank and Coursera to a Udacity Computer Vision Nanodegree.
+---
+<section class="section">
+  <div class="container">
+    <p class="about-page__eyebrow">Certificates</p>
+    <h1 class="skills-page__heading">Certificates</h1>
+    <p class="skills-page__intro">
+      {{ certificates | length }} courses and certifications completed, most recent first.
+      Click a certificate to open the full image.
+    </p>
+
+    <div class="cert-page-grid">
+      {% for cert in certificates %}
+      {% set img = "/" + (cert.path | replace("certificates/", "assets/certificates/")) %}
+      <article class="cert-item">
+        <a class="cert-item__media" href="{{ img }}" target="_blank" rel="noopener">
+          <img
+            src="{{ img }}"
+            alt="{{ cert.name }} certificate"
+            loading="lazy"
+            onerror="this.onerror=null;this.src='/assets/img/cert-placeholder.svg'"
+          />
+        </a>
+        <div class="cert-item__body">
+          <h2 class="cert-item__name">{{ cert.name }}</h2>
+          <p class="cert-item__content">{{ cert.content }}</p>
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+  </div>
+</section>

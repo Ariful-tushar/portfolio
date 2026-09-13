@@ -1,0 +1,21 @@
+{# Reusable blog post card. Expects `post` (an Eleventy collection item). #}
+{% set d = post.data %}
+<article class="post-card">
+  <p class="post-card__date">
+    <time datetime="{{ d.date | isoDate }}">{{ d.date | readableDate }}</time>
+  </p>
+  <h3 class="post-card__title">
+    <a href="{{ post.url }}">{{ d.title }}</a>
+  </h3>
+  <p class="post-card__summary">{{ d.summary }}</p>
+
+  {% if d.tags %}
+  <ul class="post-card__tags">
+    {% for tag in d.tags | limit(4) %}<li>#{{ tag }}</li>{% endfor %}
+  </ul>
+  {% endif %}
+
+  <a class="link-icon post-card__more" href="{{ post.url }}">
+    Read <span aria-hidden="true">→</span>
+  </a>
+</article>

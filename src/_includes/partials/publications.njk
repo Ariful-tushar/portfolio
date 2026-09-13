@@ -1,0 +1,28 @@
+{# ============================== Publications ============================== #}
+{% if publications | length %}
+<section class="section publications" id="publications">
+  <div class="container">
+    <h2 class="section__title">Publications</h2>
+
+    <ul class="pub-list">
+      {% for pub in publications %}
+      <li class="pub-item">
+        <span class="pub-item__icon" aria-hidden="true">
+          {% include "partials/icons/book.svg" %}
+        </span>
+        <div class="pub-item__body">
+          <h3 class="pub-item__title">
+            {% if pub.url %}
+            <a href="{{ pub.url }}" target="_blank" rel="noopener">{{ pub.title }} <span aria-hidden="true">↗</span></a>
+            {% else %}
+            {{ pub.title }}
+            {% endif %}
+          </h3>
+          {% if pub.venue %}<p class="pub-item__venue">{{ pub.venue }}</p>{% endif %}
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+</section>
+{% endif %}

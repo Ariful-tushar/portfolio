@@ -1,0 +1,28 @@
+{# ============================== Experience ============================== #}
+{# Ordered newest-first — matches the order in src/_data/experience.json #}
+<section class="section experience" id="experience">
+  <div class="container">
+    <h2 class="section__title">Experience</h2>
+
+    <ol class="timeline">
+      {% for job in experience %}
+      <li class="timeline__item">
+        <span class="timeline__marker" aria-hidden="true"></span>
+        <div class="timeline__head">
+          <h3 class="timeline__role">{{ job.role }}</h3>
+          <p class="timeline__meta">
+            <span class="timeline__company">{{ job.company }}</span>
+            <span class="timeline__dates">{{ job.start }} – {{ job.end }}</span>
+            <span class="timeline__location">{{ job.location }}</span>
+          </p>
+        </div>
+        <ul class="timeline__points">
+          {% for point in job.bullets %}
+          <li>{{ point }}</li>
+          {% endfor %}
+        </ul>
+      </li>
+      {% endfor %}
+    </ol>
+  </div>
+</section>

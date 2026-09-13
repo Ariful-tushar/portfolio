@@ -1,0 +1,52 @@
+---
+layout: base.njk
+---
+<article class="section detail">
+  <div class="container detail__inner">
+    <a class="detail__back" href="/projects/">
+      <span aria-hidden="true">←</span> All projects
+    </a>
+
+    <header class="detail__header">
+      <h1 class="detail__title">{{ title }}</h1>
+      {% if summary %}<p class="detail__lede">{{ summary }}</p>{% endif %}
+
+      {% if tech %}
+      <ul class="detail__tags">
+        {% for t in tech %}<li>{{ t }}</li>{% endfor %}
+      </ul>
+      {% endif %}
+
+      {% if github or demo %}
+      <div class="detail__links">
+        {% if github %}
+        <a class="btn btn--outline" href="{{ github }}" target="_blank" rel="noopener">
+          View code <span aria-hidden="true">↗</span>
+        </a>
+        {% endif %}
+        {% if demo %}
+        <a class="btn btn--primary" href="{{ demo }}" target="_blank" rel="noopener">
+          Live demo <span aria-hidden="true">↗</span>
+        </a>
+        {% endif %}
+      </div>
+      {% endif %}
+    </header>
+
+    {% if cover %}
+    <img class="detail__cover" src="/assets/projects/{{ page.fileSlug }}/{{ cover }}" alt="{{ title }}" />
+    {% endif %}
+
+    {% if gallery %}
+    <div class="detail__gallery">
+      {% for img in gallery %}
+      <img src="/assets/projects/{{ page.fileSlug }}/{{ img }}" alt="{{ title }} screenshot" loading="lazy" />
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="prose">
+      {{ content | safe }}
+    </div>
+  </div>
+</article>

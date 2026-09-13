@@ -1,0 +1,14 @@
+{
+  "name": "ariful-portfolio",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Personal portfolio site for Md Ariful Islam",
+  "scripts": {
+    "start": "eleventy --serve",
+    "build": "eleventy",
+    "clean": "node -e \"require('fs').rmSync('_site',{recursive:true,force:true})\""
+  },
+  "devDependencies": {
+    "@11ty/eleventy": "^3.0.0"
+  }
+}

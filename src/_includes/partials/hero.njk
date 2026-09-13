@@ -1,0 +1,37 @@
+{# ============================== Hero ============================== #}
+<section class="hero" id="top">
+  <div class="container hero__inner">
+    <div class="hero__content">
+      <p class="hero__greeting">{{ person.hero.greeting }}</p>
+      <h1 class="hero__name">{{ person.hero.name }}</h1>
+      <div class="hero__lines">
+        {% for line in person.hero.lines %}
+        <p>{{ line }}</p>
+        {% endfor %}
+      </div>
+      <div class="hero__actions">
+        <a class="btn btn--primary" href="/projects/">View projects</a>
+        <a class="btn btn--outline" href="/#contact">Get in touch <span aria-hidden="true">↗</span></a>
+      </div>
+    </div>
+
+    <div class="hero__portrait">
+      <div class="hero__photo-ring">
+        <img
+          src="{{ person.hero.photo }}"
+          alt="{{ person.hero.photoAlt }}"
+          width="440"
+          height="440"
+          fetchpriority="high"
+        />
+      </div>
+      <ul class="hero__chips" aria-hidden="true">
+        {% for chip in person.hero.chips %}
+        <li class="hero__chip" title="{{ chip.label }}">
+          {% include "partials/icons/" + chip.icon + ".svg" %}
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+</section>

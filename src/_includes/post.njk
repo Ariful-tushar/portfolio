@@ -1,0 +1,26 @@
+---
+layout: base.njk
+---
+<article class="section detail">
+  <div class="container detail__inner">
+    <a class="detail__back" href="/blog/">
+      <span aria-hidden="true">←</span> All posts
+    </a>
+
+    <header class="detail__header">
+      <h1 class="detail__title">{{ title }}</h1>
+      <p class="detail__byline">
+        <time datetime="{{ date | isoDate }}">{{ date | readableDate }}</time>
+      </p>
+      {% if tags %}
+      <ul class="detail__tags">
+        {% for tag in tags %}<li>#{{ tag }}</li>{% endfor %}
+      </ul>
+      {% endif %}
+    </header>
+
+    <div class="prose">
+      {{ content | safe }}
+    </div>
+  </div>
+</article>

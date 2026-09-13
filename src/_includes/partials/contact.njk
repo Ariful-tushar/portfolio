@@ -1,0 +1,53 @@
+{# ============================== Contact ============================== #}
+{#
+  No form yet (form service to be decided). When one is added, drop the
+  <form> into .contact__panel below — no other markup needs to change.
+#}
+<section class="section contact" id="contact">
+  <div class="container">
+    <h2 class="section__title">Get in touch</h2>
+    <p class="section__subtitle">
+      {% if person.openToWork %}Open to roles in AI and automation engineering. {% endif %}The
+      fastest way to reach me is email.
+    </p>
+
+    <div class="contact__panel">
+      <ul class="contact__details">
+        {% if person.email %}
+        <li>
+          {% include "partials/icons/mail.svg" %}
+          <a href="mailto:{{ person.email }}">{{ person.email }}</a>
+        </li>
+        {% endif %}
+        {% if person.phone %}
+        <li>
+          {% include "partials/icons/phone.svg" %}
+          <a href="{{ person.phone | telHref }}">{{ person.phone }}</a>
+        </li>
+        {% endif %}
+        {% if person.location %}
+        <li>
+          {% include "partials/icons/map-pin.svg" %}
+          <span>{{ person.location }}</span>
+        </li>
+        {% endif %}
+      </ul>
+
+      <div class="contact__actions">
+        <a class="btn btn--primary" href="mailto:{{ person.email }}">
+          {% include "partials/icons/mail.svg" %} Email me
+        </a>
+        {% if person.profiles.linkedin %}
+        <a class="btn btn--outline" href="{{ person.profiles.linkedin }}" target="_blank" rel="noopener">
+          {% include "partials/icons/linkedin.svg" %} LinkedIn
+        </a>
+        {% endif %}
+        {% if person.profiles.github %}
+        <a class="btn btn--outline" href="{{ person.profiles.github }}" target="_blank" rel="noopener">
+          {% include "partials/icons/github.svg" %} GitHub
+        </a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</section>

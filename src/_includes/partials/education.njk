@@ -1,0 +1,20 @@
+{# ============================== Education ============================== #}
+{# Ordered newest-first — matches src/_data/education.json #}
+<section class="section education" id="education">
+  <div class="container">
+    <h2 class="section__title">Education</h2>
+
+    <div class="edu-grid">
+      {% for ed in education %}
+      <article class="edu-card">
+        <span class="edu-card__icon" aria-hidden="true">
+          {% include "partials/icons/cap.svg" %}
+        </span>
+        <h3 class="edu-card__degree">{{ ed.degree }}</h3>
+        <p class="edu-card__institution">{{ ed.institution }}</p>
+        <p class="edu-card__meta">{{ ed.start }} – {{ ed.end }} · {{ ed.location }}</p>
+      </article>
+      {% endfor %}
+    </div>
+  </div>
+</section>

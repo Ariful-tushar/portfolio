@@ -1,0 +1,87 @@
+---
+layout: base.njk
+---
+<article class="section about-page">
+  <div class="container about-page__grid">
+    <div class="about-page__main">
+      <p class="about-page__eyebrow">{{ eyebrow }}</p>
+      <h1 class="about-page__heading">{{ heading }}</h1>
+      <p class="about-page__role">{{ person.title }}</p>
+
+      <div class="prose about-page__body">
+        {{ content | safe }}
+      </div>
+
+      <section class="cv-section">
+        <h2>Experience</h2>
+        {% for job in experience %}
+        <div class="cv-entry">
+          <h3 class="cv-entry__title">{{ job.role }}</h3>
+          <p class="cv-entry__meta">{{ job.company }} · {{ job.start }} – {{ job.end }} · {{ job.location }}</p>
+          <ul class="cv-entry__points">
+            {% for point in job.bullets %}<li>{{ point }}</li>{% endfor %}
+          </ul>
+        </div>
+        {% endfor %}
+      </section>
+
+      <section class="cv-section">
+        <h2>Education</h2>
+        {% for ed in education %}
+        <div class="cv-entry">
+          <h3 class="cv-entry__title">{{ ed.degree }}</h3>
+          <p class="cv-entry__meta">{{ ed.institution }} · {{ ed.start }} – {{ ed.end }} · {{ ed.location }}</p>
+        </div>
+        {% endfor %}
+      </section>
+
+      <section class="cv-section">
+        <h2>Languages</h2>
+        <ul class="cv-languages">
+          {% for lang in languages %}
+          <li><strong>{{ lang.name }}</strong> — {{ lang.level }}</li>
+          {% endfor %}
+        </ul>
+      </section>
+    </div>
+
+    <aside class="about-aside">
+      <img
+        class="about-aside__photo"
+        src="{{ person.hero.photo }}"
+        alt="{{ person.hero.photoAlt }}"
+        width="400"
+        height="500"
+      />
+
+      <ul class="about-aside__links">
+        {% if person.profiles.linkedin %}
+        <li>
+          <a href="{{ person.profiles.linkedin }}" target="_blank" rel="noopener">
+            {% include "partials/icons/linkedin.svg" %}<span>Follow on LinkedIn</span>
+          </a>
+        </li>
+        {% endif %}
+        {% if person.profiles.github %}
+        <li>
+          <a href="{{ person.profiles.github }}" target="_blank" rel="noopener">
+            {% include "partials/icons/github.svg" %}<span>Follow on GitHub</span>
+          </a>
+        </li>
+        {% endif %}
+      </ul>
+
+      {% if person.email %}
+      <a class="about-aside__email" href="mailto:{{ person.email }}">
+        {% include "partials/icons/mail.svg" %}<span>{{ person.email }}</span>
+      </a>
+      {% endif %}
+
+      {% if person.cv %}
+      <a class="btn btn--primary about-aside__cv" href="{{ person.cv }}" download>
+        Download CV {% include "partials/icons/download.svg" %}
+      </a>
+      {% endif %}
+    </aside>
+  </div>
+</article>

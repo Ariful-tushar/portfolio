@@ -1,0 +1,20 @@
+---
+layout: base.njk
+permalink: /projects/
+title: Projects
+description: Projects by Md Ariful Islam — AI-assisted data acquisition, automation pipelines, and applied computer vision.
+---
+<section class="section">
+  <div class="container">
+    <h1 class="section__title">Projects</h1>
+    <p class="section__subtitle">
+      Selected work in AI automation, data acquisition, and applied machine learning.
+    </p>
+
+    <div class="project-grid">
+      {% for project in collections.projects %}
+        {% include "partials/project-card.njk" %}
+      {% endfor %}
+    </div>
+  </div>
+</section>

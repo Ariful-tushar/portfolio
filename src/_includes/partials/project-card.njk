@@ -1,0 +1,40 @@
+{# Reusable project card. Expects `project` (an Eleventy collection item). #}
+{% set p = project.data %}
+<article class="project-card">
+  <a class="project-card__media" href="{{ project.url }}" tabindex="-1" aria-hidden="true">
+    {% if p.cover %}
+    <img src="/assets/projects/{{ project.fileSlug }}/{{ p.cover }}" alt="" loading="lazy" />
+    {% else %}
+    <span class="project-card__monogram">{{ p.title | first }}</span>
+    {% endif %}
+  </a>
+
+  <div class="project-card__body">
+    <h3 class="project-card__title">
+      <a href="{{ project.url }}">{{ p.title }}</a>
+    </h3>
+    <p class="project-card__summary">{{ p.summary }}</p>
+
+    {% if p.tech %}
+    <ul class="project-card__tags">
+      {% for t in p.tech | limit(tagLimit or 5) %}<li>{{ t }}</li>{% endfor %}
+    </ul>
+    {% endif %}
+  </div>
+
+  <div class="project-card__actions">
+    {% if p.github %}
+    <a class="project-card__action" href="{{ p.github }}" target="_blank" rel="noopener">
+      Code <span aria-hidden="true">↗</span>
+    </a>
+    {% endif %}
+    {% if p.demo %}
+    <a class="project-card__action" href="{{ p.demo }}" target="_blank" rel="noopener">
+      Live demo <span aria-hidden="true">↗</span>
+    </a>
+    {% endif %}
+    <a class="project-card__action project-card__action--primary" href="{{ project.url }}">
+      Details <span aria-hidden="true">→</span>
+    </a>
+  </div>
+</article>
