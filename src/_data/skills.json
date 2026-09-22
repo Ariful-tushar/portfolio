@@ -52,6 +52,8 @@
     "items": [
       "Python",
       "FastAPI",
+      "Node.js",
+      "Express",
       "REST APIs",
       "SQLAlchemy",
       "Pydantic",
@@ -61,14 +63,27 @@
     ]
   },
   {
+    "group": "Frontend & UI",
+    "icon": "cat-frontend",
+    "items": [
+      "React",
+      "JavaScript",
+      "React Router",
+      "Tailwind CSS",
+      "Material UI (MUI)",
+      "React Hook Form",
+      "HTML/CSS"
+    ]
+  },
+  {
     "group": "Databases",
     "icon": "cat-backend",
-    "items": ["SQL", "PostgreSQL"]
+    "items": ["SQL", "PostgreSQL", "MongoDB"]
   },
   {
     "group": "DevOps & Tooling",
     "icon": "cat-devops",
-    "items": ["Git", "Docker", "Azure DevOps", "CI/CD", "HTML test fixtures"]
+    "items": ["Git", "Docker", "Azure DevOps", "CI/CD", "Firebase", "HTML test fixtures"]
   },
   {
     "group": "IoT & Edge",
