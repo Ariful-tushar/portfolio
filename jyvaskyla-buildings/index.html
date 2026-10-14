@@ -1,0 +1,1158 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jyväskylä: every building by year</title>
+<meta name="description" content="How Jyväskylä grew, building by building: an interactive 3D map of every building and the year it was built.">
+<script>
+  // pick theme and language before anything draws (no flash)
+  (function () {
+    let th = null, lg = null;
+    try { th = localStorage.getItem('vr-theme'); lg = localStorage.getItem('vr-lang'); } catch (e) {}
+    th = th || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    lg = lg || ((navigator.language || '').toLowerCase().startsWith('fi') ? 'fi' : 'en');
+    document.documentElement.dataset.theme = th; document.documentElement.lang = lg;
+  })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;800&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script src="https://unpkg.com/deck.gl@9.1.14/dist.min.js"></script>
+<style>
+  :root[data-theme="light"] {
+    --bg: #f2ede1; --panel: rgba(255, 255, 255, .9); --panel-solid: #ffffff; --panel-2: #f2f4f7; --hover: rgba(28, 36, 51, .05);
+    --ink: #1c2433; --muted: #586276; --faint: #7d8699; --line: rgba(28, 36, 51, .13); --accent: #1f6f78; --on-ink: #ffffff;
+    --grid: rgba(31, 111, 120, .09); --shadow: 0 10px 30px rgba(28, 36, 51, .12);
+  }
+  :root[data-theme="dark"] {
+    --bg: #121a2b; --panel: rgba(24, 31, 47, .88); --panel-solid: #181f2f; --panel-2: #1d2537; --hover: rgba(255, 255, 255, .05);
+    --ink: #eceff6; --muted: #98a1b6; --faint: #6f788d; --line: rgba(220, 226, 240, .12); --accent: #e2b66b; --on-ink: #121826;
+    --grid: rgba(226, 182, 107, .08); --shadow: 0 10px 30px rgba(0, 0, 0, .35);
+  }
+  :root { --display: Unbounded, "Arial Black", sans-serif; --text: "Instrument Sans", system-ui, sans-serif; color-scheme: light dark; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); font: 15px/1.5 var(--text); overflow: hidden; }
+  a { color: inherit; }
+  button { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+  #map { position: absolute; inset: 0; }
+  .maplibregl-ctrl-attrib, .maplibregl-ctrl-logo { display: none !important; }
+
+  /* ---------- header ---------- */
+  header { position: absolute; left: 0; right: 0; top: 0; z-index: 20; display: flex; align-items: center; gap: 24px; padding: 14px 22px;
+    background: linear-gradient(color-mix(in srgb, var(--bg) 95%, transparent), color-mix(in srgb, var(--bg) 75%, transparent) 65%, transparent); }
+  .brand { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+  .brand { align-self: flex-start; }
+  .brand svg { width: 42px; height: 42px; flex: none; align-self: center; }
+  .brand b { display: block; font: 800 clamp(30px, 3.4vw, 48px)/.95 var(--display); letter-spacing: -.035em; }
+  .brand span { display: block; font-size: 13px; color: var(--muted); margin-top: 6px; }
+  .brand b { background: linear-gradient(95deg, #c0261a 0%, #e8552a 30%, #f08a24 55%, #1fa37a 80%, #2f6fd0 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 2px 6px rgba(255, 255, 255, .55)); }
+  :root[data-theme="dark"] .brand b { background-image: linear-gradient(95deg, #ff6a4d 0%, #ffb340 32%, #f4d84a 55%, #5fd39a 78%, #6ea8ff 100%);
+    filter: drop-shadow(0 2px 10px rgba(0, 0, 0, .55)); }
+
+  nav { display: flex; gap: 4px; }
+  nav a, nav button { text-decoration: none; padding: 7px 13px; border-radius: 99px; color: var(--muted); border: 0; background: none; cursor: pointer; font-size: 14px; }
+  nav a:hover, nav button:hover { color: var(--ink); background: var(--hover); }
+  nav a[aria-current="page"] { color: var(--on-ink); background: var(--ink); }
+  .tools { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+  .maker { font-size: 13.5px; color: var(--muted); text-decoration: none; margin-right: 6px; }
+  .maker b { color: var(--ink); font-weight: 600; border-bottom: 1px solid color-mix(in srgb, var(--ink) 35%, transparent); }
+  .maker:hover b { border-color: var(--accent); }
+  .iconbtn { height: 34px; min-width: 34px; padding: 0 10px; border-radius: 99px; border: 1px solid var(--line); background: var(--panel);
+    display: inline-grid; place-items: center; cursor: pointer; font-size: 12.5px; font-weight: 600; }
+  .iconbtn:hover { border-color: var(--accent); }
+  .iconbtn svg { width: 16px; height: 16px; }
+
+  .glass { background: var(--panel); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    border: 1px solid var(--line); border-radius: 18px; box-shadow: var(--shadow); }
+
+  /* ---------- year dial ---------- */
+  #dial { position: absolute; left: 22px; bottom: 22px; z-index: 15; width: 188px; height: 188px; border-radius: 50%; padding: 0; border: 0;
+    background: radial-gradient(circle, var(--panel-solid) 0 58%, color-mix(in srgb, var(--panel-solid) 70%, transparent) 72%, transparent 73%);
+    cursor: pointer; filter: drop-shadow(0 8px 18px rgba(0, 0, 0, .14)); }
+  #dial svg { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); }
+  #dial .centre { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; pointer-events: none; }
+  #dial .yr { font: 800 25px/1 var(--display); letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+  #dial .ct { font-size: 11.5px; color: var(--muted); margin-top: 5px; font-variant-numeric: tabular-nums; }
+  #dial .pp { margin: 7px auto 0; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: var(--ink); color: var(--on-ink); font-size: 10px; }
+  #dial:hover .pp { background: var(--accent); }
+
+  /* ---------- time ribbon ---------- */
+  #ribbon { position: absolute; left: 228px; right: 22px; bottom: 26px; z-index: 14; height: 86px; padding: 12px 18px 8px; }
+  #ribbon .track { position: relative; height: 48px; }
+  #hist { position: absolute; inset: 0; width: 100%; height: 100%; }
+  #slider { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: ew-resize; }
+  #ticks { position: relative; height: 16px; font-size: 11px; color: var(--faint); margin-top: 4px; }
+  #ticks span { position: absolute; transform: translateX(-50%); font-variant-numeric: tabular-nums; }
+  #ribbon .speed { position: absolute; right: 14px; top: -36px; display: flex; gap: 4px; }
+  #ribbon .speed button { border: 1px solid var(--line); background: var(--panel); border-radius: 99px; padding: 3px 11px; font-size: 12px; color: var(--muted); cursor: pointer; }
+  #ribbon .speed button[aria-pressed="true"] { color: var(--on-ink); background: var(--ink); }
+
+  /* ---------- era panel ---------- */
+  #rail { position: absolute; right: 22px; top: 104px; z-index: 15; width: 268px; padding: 14px 10px 10px; max-height: calc(100% - 222px); overflow: auto; }
+  #rail h2 { margin: 0 10px 6px; font: 600 13px/1.3 var(--display); }
+  .era { display: grid; grid-template-columns: 16px 1fr auto; gap: 11px; align-items: center; width: 100%; text-align: left;
+    padding: 6px 10px; border: 0; border-radius: 12px; background: none; cursor: pointer; }
+  .era:hover { background: var(--hover); }
+  .era.dim { opacity: .35; }
+  .sw { width: 16px; height: 16px; border-radius: 4px; box-shadow: inset 0 -5px 0 rgba(0, 0, 0, .18), 0 1px 3px rgba(0, 0, 0, .18); }
+  .era b { display: block; font-weight: 600; font-size: 13.5px; }
+  .era small { display: block; color: var(--muted); font-size: 12px; line-height: 1.3; }
+  .era .n { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .toggle { display: flex; align-items: center; gap: 9px; margin: 10px 10px 2px; font-size: 13px; color: var(--muted); cursor: pointer; }
+  .toggle input { accent-color: var(--accent); width: 16px; height: 16px; }
+
+  /* ---------- building drawer ---------- */
+  #drawer { position: absolute; right: 22px; top: 104px; z-index: 16; width: 330px; padding: 18px 18px 16px; display: none; }
+  .x { position: absolute; right: 12px; top: 10px; width: 30px; height: 30px; border-radius: 50%; border: 0; background: var(--hover); cursor: pointer; font-size: 17px; z-index: 2; }
+  .bname { font: 600 19px/1.25 var(--display); letter-spacing: -.01em; padding-right: 30px; }
+  .baddr { color: var(--muted); margin-top: 3px; }
+  .byear { margin: 12px 0 4px; font: 800 40px/1 var(--display); letter-spacing: -.03em; }
+  .chip { display: inline-flex; align-items: center; gap: 7px; padding: 3px 11px 3px 6px; border-radius: 99px; font-size: 12.5px; font-weight: 600;
+    border: 1.5px solid var(--c); background: color-mix(in srgb, var(--c) 14%, transparent); }
+  .chip i { width: 12px; height: 12px; border-radius: 3px; background: var(--c); }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(92px, 1fr)); gap: 1px; margin: 14px 0; border-radius: 12px; overflow: hidden; background: var(--line); }
+  .stats div { background: var(--panel-2); padding: 9px 10px; }
+  .stats b { display: block; font: 600 16px/1.2 var(--display); }
+  .stats span { font-size: 12px; color: var(--muted); }
+  .btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 99px; text-decoration: none;
+    font-weight: 600; font-size: 14px; color: var(--on-ink); background: var(--ink); border: 0; cursor: pointer; }
+  .btn:hover { background: var(--accent); color: var(--on-ink); }
+  .est { font-size: 12.5px; color: var(--muted); margin: 6px 0 0; }
+
+  /* ---------- pages ---------- */
+  .page { position: absolute; z-index: 18; display: none; }
+  .detail { left: 22px; top: 100px; bottom: 22px; width: min(480px, calc(100% - 44px)); overflow: auto; padding: 0 0 22px; }
+  .detail .inner { padding: 20px 26px 0; }
+  .detail .photo img { display: block; width: 100%; height: 230px; object-fit: cover; border-radius: 18px 18px 0 0; }
+  .plan { height: 190px; border-bottom: 1px solid var(--line); border-radius: 18px 18px 0 0; position: relative;
+    background-color: var(--panel-2); background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 22px 22px; }
+  .plan svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .detail h1 { font: 800 28px/1.15 var(--display); letter-spacing: -.02em; margin: 0; }
+  .detail h2 { font: 600 14px/1.3 var(--display); margin: 22px 0 8px; }
+  .detail dl { display: grid; grid-template-columns: 140px 1fr; gap: 6px 14px; margin: 0; font-size: 14px; }
+  .detail dt { color: var(--muted); } .detail dd { margin: 0; }
+  .detail ul { margin: 0; padding-left: 18px; }
+  .detail .links { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+  .detail .links a { text-decoration: none; padding: 7px 13px; border-radius: 99px; border: 1px solid var(--line); font-size: 13.5px; }
+  .detail .links a:hover { border-color: var(--accent); }
+  .twins { display: grid; gap: 6px; }
+  .twins a { display: flex; justify-content: space-between; gap: 12px; text-decoration: none; padding: 9px 12px; border-radius: 12px; background: var(--panel-2); font-size: 14px; }
+  .twins a:hover { outline: 1px solid var(--accent); }
+  .twins span { color: var(--muted); white-space: nowrap; }
+  .back { display: inline-block; margin-bottom: 14px; font-size: 13.5px; color: var(--muted); text-decoration: none; }
+  .back:hover { color: var(--ink); }
+  .ids { margin-top: 18px; font-size: 12.5px; color: var(--faint); }
+
+  #list { inset: 0; background: color-mix(in srgb, var(--bg) 93%, transparent); backdrop-filter: blur(10px); overflow: auto; padding: 120px 22px 40px; }
+  #list .wrap { max-width: 1040px; margin: 0 auto; }
+  #list h1 { font: 800 clamp(30px, 5vw, 50px)/1 var(--display); letter-spacing: -.03em; margin: 0 0 8px; }
+  #list .lede { color: var(--muted); margin: 0 0 22px; max-width: 64ch; }
+  .controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 14px; }
+  .controls input[type=search], .controls select { background: var(--panel-solid); border: 1px solid var(--line); color: var(--ink);
+    border-radius: 99px; padding: 10px 16px; font: inherit; font-size: 14px; }
+  .controls input[type=search] { flex: 1 1 260px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 18px; }
+  .chips button { display: inline-flex; align-items: center; gap: 7px; border: 1px solid var(--line); background: var(--panel-solid); border-radius: 99px;
+    padding: 5px 12px 5px 8px; font-size: 13px; color: var(--muted); cursor: pointer; }
+  .chips button[aria-pressed="true"] { color: var(--ink); border-color: var(--ink); }
+  .chips i { width: 11px; height: 11px; border-radius: 3px; display: inline-block; }
+  .rows { border-top: 1px solid var(--line); }
+  .rows a { display: grid; grid-template-columns: 16px 1fr auto auto; gap: 16px; align-items: center; padding: 12px 6px; text-decoration: none; border-bottom: 1px solid var(--line); }
+  .rows a:hover { background: var(--hover); }
+  .rows .t b { display: block; font-weight: 600; }
+  .rows .t span { color: var(--muted); font-size: 13.5px; }
+  .rows .fl { color: var(--muted); font-size: 13px; text-align: right; white-space: nowrap; }
+  .rows .y { font: 600 20px/1 var(--display); font-variant-numeric: tabular-nums; min-width: 72px; text-align: right; }
+  .pager { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 18px; color: var(--muted); font-size: 14px; }
+  .pager button { border: 1px solid var(--line); background: var(--panel-solid); border-radius: 99px; padding: 8px 16px; cursor: pointer; }
+  .pager button:disabled { opacity: .35; cursor: default; }
+  .empty { padding: 40px 6px; color: var(--muted); }
+
+  dialog { max-width: 560px; width: calc(100% - 32px); border: 1px solid var(--line); border-radius: 22px; background: var(--panel-solid); color: var(--ink); padding: 26px 28px; }
+  dialog::backdrop { background: rgba(10, 14, 24, .5); backdrop-filter: blur(4px); }
+  dialog h2 { font: 800 24px/1.2 var(--display); margin: 0 0 10px; }
+  dialog h3 { font: 600 14px/1.3 var(--display); margin: 18px 0 6px; }
+  dialog p { margin: 0 0 10px; color: var(--muted); }
+  dialog .close { float: right; }
+
+  /* big film year */
+  #bigYear { position: absolute; left: 24px; top: 108px; z-index: 13; pointer-events: none; opacity: 0; transform: translateY(-8px);
+    transition: opacity .5s, transform .5s; }
+  body.playing[data-route="map"] #bigYear { opacity: 1; transform: none; }
+  #bigYear b { display: block; font: 800 clamp(64px, 9vw, 118px)/.9 var(--display); letter-spacing: -.05em; font-variant-numeric: tabular-nums;
+    color: var(--ink); text-shadow: 0 2px 24px color-mix(in srgb, var(--bg) 80%, transparent); }
+  #bigYear span { display: inline-flex; align-items: center; gap: 8px; margin-top: 10px; padding: 5px 12px 5px 8px; border-radius: 99px;
+    background: var(--panel); border: 1px solid var(--line); font-size: 13.5px; font-weight: 600; backdrop-filter: blur(10px); }
+  #bigYear span i { width: 12px; height: 12px; border-radius: 3px; background: var(--c, #888); }
+  #hint { position: absolute; left: 50%; transform: translateX(-50%); white-space: nowrap; bottom: 124px; z-index: 13; font-size: 12px; color: var(--muted); background: var(--panel);
+    border: 1px solid var(--line); padding: 3px 11px; border-radius: 99px; pointer-events: none; transition: opacity .6s; }
+  body:not([data-route="map"]) #hint { opacity: 0; }
+  @media (hover: none), (max-width: 900px) { #hint { display: none; } }
+  #map.turning, #map.turning canvas { cursor: grabbing !important; }
+  #map.panning, #map.panning canvas { cursor: move !important; }
+
+  #credits { position: absolute; right: 22px; bottom: 4px; z-index: 14; font-size: 11px; color: var(--muted); background: var(--panel); padding: 1px 10px; border-radius: 99px; }
+  #credits a { color: var(--ink); }
+  #loading { position: absolute; inset: 0; z-index: 30; display: grid; place-content: center; text-align: center; background: var(--bg); transition: opacity .6s; }
+  #loading p { color: var(--muted); }
+  .stack { width: 70px; height: 70px; margin: 0 auto 14px; display: flex; flex-direction: column-reverse; align-items: center; gap: 4px; }
+  .stack i { display: block; height: 11px; border-radius: 3px; animation: rise 1.8s ease-in-out infinite; transform-origin: bottom; opacity: 0; }
+  .stack i:nth-child(1) { width: 64px; background: #b3261a; animation-delay: 0s; }
+  .stack i:nth-child(2) { width: 52px; background: #f08a24; animation-delay: .25s; }
+  .stack i:nth-child(3) { width: 40px; background: #8fb52f; animation-delay: .5s; }
+  .stack i:nth-child(4) { width: 28px; background: #2f6fd0; animation-delay: .75s; }
+  @keyframes rise { 0% { opacity: 0; transform: translateY(-14px); } 25%, 75% { opacity: 1; transform: none; } 100% { opacity: 0; } }
+
+  body[data-route="list"] #rail, body[data-route="list"] #drawer, body[data-route="list"] #dial, body[data-route="list"] #ribbon { display: none !important; }
+  body[data-route="detail"] #rail, body[data-route="detail"] #drawer { display: none !important; }
+  body[data-route="detail"] #dial { left: auto; right: 22px; }
+  body[data-route="detail"] #ribbon { left: 524px; right: 232px; }
+
+  #railBtn { display: none; position: absolute; right: 14px; bottom: 104px; z-index: 15; }
+  @media (max-width: 900px) {
+    header { gap: 10px; padding: 10px 12px; flex-wrap: wrap; }
+    .brand span { display: none; } .maker { display: none; } .brand b { font-size: 26px; } .brand svg { width: 32px; height: 32px; }
+    nav a, nav button { padding: 6px 9px; font-size: 13px; }
+    #rail { display: none; top: auto; bottom: 150px; left: 12px; right: 12px; width: auto; max-height: 45%; }
+    #rail.open { display: block; }
+    #railBtn { display: inline-flex; }
+    #dial { width: 132px; height: 132px; left: 12px; bottom: 12px; } #dial .yr { font-size: 19px; } #dial .ct { display: none; }
+    #ribbon { left: 152px; right: 12px; bottom: 16px; height: 76px; padding: 10px 12px 6px; } #ribbon .speed { display: none; }
+    #drawer { left: 12px; right: 12px; width: auto; top: auto; bottom: 156px; }
+    .detail { left: 0; right: 0; top: auto; bottom: 0; height: 62%; width: 100%; border-radius: 22px 22px 0 0; }
+    body[data-route="detail"] #dial, body[data-route="detail"] #ribbon { display: none; }
+    .rows a { grid-template-columns: 14px 1fr auto; } .rows .fl { display: none; }
+    #credits { display: none; }
+  }
+  @media (prefers-reduced-motion: reduce) { .stack i { animation: none; opacity: 1; } }
+</style>
+</head>
+<body data-route="map">
+<div id="map"></div>
+
+<div id="loading"><div class="stack" aria-hidden="true"><i></i><i></i><i></i><i></i></div><p id="loadingText" data-t="loading"></p></div>
+
+<header>
+  <a class="brand" href="/" data-link aria-label="Jyväskylä">
+    <svg viewBox="0 0 40 40" aria-hidden="true">
+      <rect x="4" y="27" width="32" height="8" rx="2" fill="#b3261a"/><rect x="8" y="18" width="24" height="8" rx="2" fill="#f08a24"/>
+      <rect x="12" y="9" width="16" height="8" rx="2" fill="#8fb52f"/><rect x="16" y="2" width="8" height="6" rx="1.5" fill="#2f6fd0"/>
+    </svg>
+    <div><b>Jyväskylä</b><span data-t="tagline"></span></div>
+  </a>
+  <nav aria-label="Main">
+    <a href="/" data-link data-nav="map" data-t="navMap"></a>
+    <a href="/all-buildings" data-link data-nav="list" data-t="navList"></a>
+    <button type="button" id="aboutBtn" data-t="navAbout"></button>
+  </nav>
+  <div class="tools">
+    <a class="maker" href="https://arifultushar.online" target="_blank" rel="noopener"><span data-t="madeBy"></span> <b>Md Ariful Islam</b></a>
+    <button class="iconbtn" type="button" id="langBtn"></button>
+    <button class="iconbtn" type="button" id="themeBtn"></button>
+  </div>
+</header>
+
+<aside id="rail" class="glass">
+  <h2 data-t="eras"></h2>
+  <div id="eras"></div>
+  <label class="toggle"><input type="checkbox" id="sheds" checked> <span data-t="showSheds"></span></label>
+</aside>
+<button id="railBtn" class="btn" type="button" aria-expanded="false" data-t="eras"></button>
+
+<section id="drawer" class="glass" aria-live="polite"></section>
+
+<button id="dial" type="button">
+  <svg viewBox="0 0 200 200" id="rings"></svg>
+  <span class="centre"><span class="yr" id="yr"></span><span class="ct" id="ct"></span><span class="pp" id="pp">▶</span></span>
+</button>
+
+<div id="ribbon" class="glass">
+  <div class="speed" role="group">
+    <button type="button" data-speed="1" aria-pressed="true" data-t="calm"></button>
+    <button type="button" data-speed="2" aria-pressed="false" data-t="fast"></button>
+  </div>
+  <div class="track">
+    <svg id="hist" preserveAspectRatio="none" aria-hidden="true"></svg>
+    <input id="slider" type="range">
+  </div>
+  <div id="ticks"></div>
+</div>
+
+<article id="detail" class="page detail glass" aria-live="polite"></article>
+<section id="list" class="page"></section>
+<div id="credits"></div>
+<div id="bigYear" aria-hidden="true"><b id="byNum"></b><span id="byEra"><i></i><em style="font-style:normal"></em></span></div>
+<div id="hint" data-t="hint"></div>
+
+<dialog id="about">
+  <button class="btn close" type="button" id="aboutClose" data-t="close"></button>
+  <div id="aboutBody"></div>
+</dialog>
+
+<script>
+/* ======================================= settings ======================================= */
+const CONFIG = {
+  // the site works at the root (local server) and in the /jyvaskyla-buildings folder of arifultushar.online
+  base: location.pathname.startsWith('/jyvaskyla-buildings') ? '/jyvaskyla-buildings' : '',
+  data: '/buildings.geojson',
+  details: '/buildings_details.json',
+  center: [25.7472, 62.2416], zoom: 14.4, pitch: 54, bearing: 24,
+  overview: { center: [25.745, 62.236], zoom: 12.45, pitch: 50 },   // the whole city, used when the film starts
+  heightScale: 1.5, minHeight: 4,          // buildings drawn 1.5x taller (at least 4 m) so the city reads clearly
+  startYear: 1850, filmMs: 34000, pageSize: 40,
+  styles: {   // first one that loads is used
+    light: ['https://tiles.openfreemap.org/styles/liberty', 'https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json'],
+    dark:  ['https://tiles.openfreemap.org/styles/liberty', 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json']
+  }
+};
+// Vivid palette: deep red for the oldest, through orange, yellow and green, to blue and purple for the newest
+const ERAS = [
+  { to: 1899, color: '#9e1b14', label: { en: 'Before 1900', fi: 'Ennen 1900' }, sub: { en: 'Wooden town on the lake', fi: 'Puukaupunki järven rannalla' } },
+  { to: 1917, color: '#d8402a', label: { en: '1900–1917', fi: '1900–1917' }, sub: { en: 'Jugend and the new century', fi: 'Jugend ja uusi vuosisata' } },
+  { to: 1939, color: '#f08a24', label: { en: '1918–1939', fi: '1918–1939' }, sub: { en: 'Independence, early Aalto', fi: 'Itsenäisyys ja varhainen Aalto' } },
+  { to: 1959, color: '#f4c12c', label: { en: '1940–1959', fi: '1940–1959' }, sub: { en: 'War and rebuilding', fi: 'Sota ja jälleenrakennus' } },
+  { to: 1979, color: '#8fb52f', label: { en: '1960–1979', fi: '1960–1979' }, sub: { en: 'The great move to town', fi: 'Suuri muutto kaupunkiin' } },
+  { to: 1999, color: '#1fa37a', label: { en: '1980–1999', fi: '1980–1999' }, sub: { en: 'Suburbs fill in', fi: 'Lähiöt täydentyvät' } },
+  { to: 2014, color: '#2f6fd0', label: { en: '2000–2014', fi: '2000–2014' }, sub: { en: 'Lakeside districts', fi: 'Rantakaupunginosat' } },
+  { to: 9998, color: '#8a3fc0', label: { en: '2015–today', fi: '2015–nyt' }, sub: { en: 'The newest rings', fi: 'Uusimmat vuosirenkaat' } },
+];
+const UNKNOWN = { color: '#c9c3b6', colorDark: '#4c556b', label: { en: 'Year unknown', fi: 'Vuosi tuntematon' }, sub: { en: 'Not matched in the register', fi: 'Ei löytynyt rekisteristä' } };
+
+const TXT = {
+  en: {
+    tagline: 'Every building, by the year it was built', navMap: 'Map', navList: 'All buildings', navAbout: 'About', madeBy: 'Made by',
+    hint: 'Drag to turn and tilt · Right-drag or Shift-drag to move · Scroll to zoom',
+    eras: 'Eras', showSheds: 'Show saunas, sheds and garages', calm: 'Calm', fast: 'Fast', close: 'Close',
+    loading: 'Building the city…', today: 'Today', buildings: n => `${n} buildings`, play: 'Play how the city grew', pause: 'Pause', year: 'Year',
+    toLight: 'Switch to light mode', toDark: 'Switch to dark mode', langBtn: 'FI', langAria: 'Suomeksi',
+    openPage: 'Open building page', building: 'Building', yearUnknown: 'Year unknown',
+    estimate: 'Recorded as 1 January, so this year is probably an estimate.',
+    floors: n => (n === 1 ? 'floor' : 'floors'), floorArea: 'm² floor area', footprint: 'm² footprint', homes: n => (n === 1 ? 'home' : 'homes'), volume: 'm³ volume', type: 'type',
+    holds: (n, a, b) => `This outline holds ${n} registered buildings, finished ${a}–${b}.`,
+    secBuilding: 'The building', rType: 'Type', rUse: 'In use as', rKind: 'Kind of place',
+    secBuilt: 'How it is built', rStructure: 'Structure', rFacade: 'Facade', rMethod: 'Method',
+    secEnergy: 'Energy', rHeating: 'Heating', rSource: 'Energy source',
+    secHeritage: 'Heritage', rProtected: 'Protected', yes: 'Yes', rSignif: 'Significance',
+    secInside: 'Inside', secOther: 'Other entrances', website: 'Website', streetPhotos: 'Street photos',
+    twins: y => `Also finished in ${y}, nearby`, away: m => `${m} m away`, buildingId: 'Building ID', property: 'property',
+    backMap: 'Back to the map', backList: 'Back to all buildings', notFound: 'Building not found',
+    notFoundText: id => `No building has the ID ${id}. Search for it on the list of all buildings.`, scale: 'm',
+    listTitle: 'All buildings', listLede: (n, q) => `${n} buildings${q ? ` matching “${q}”` : ''}. Open one to see when it was built, what it is made of and what is inside.`,
+    search: 'Search by street, name or building ID', sortOld: 'Oldest first', sortNew: 'Newest first', sortName: 'Name A–Z', sortBig: 'Largest first', sortTall: 'Tallest first',
+    noAddr: 'Include buildings without an address', allEras: 'All eras', prev: 'Previous', next: 'Next', page: (a, b) => `Page ${a} of ${b}`,
+    empty: 'No buildings match. Try a shorter search or another era.', loadingNames: 'Loading names and addresses…',
+    loadError: e => `The building data did not load (${e}).<br>Run <b>prepare_web_data.py</b>, then start <b>serve.py</b> and open <b>http://localhost:8001</b>.`,
+    credits: 'Data: <a href="https://ryhti.syke.fi/" target="_blank" rel="noopener">Syke Ryhti</a>, <a href="https://www.maanmittauslaitos.fi/en" target="_blank" rel="noopener">National Land Survey of Finland</a> (CC BY 4.0), <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a>. Basemap: OpenFreeMap, OpenMapTiles, CARTO.',
+    about: `<h2>Vuosirengas</h2>
+      <p><em>Vuosirengas</em> is Finnish for a tree's annual ring. A trunk keeps one ring for every year it grew; this map does the same for Jyväskylä, colouring each building by the year it was finished.</p>
+      <p>Press the dial to watch every building rain down in the year it was finished, from the 1850s to today. Click any building for its story, or browse them all. Drag to turn and tilt the map (all the way to a top-down view), right-drag to move it.</p>
+      <h3>Data</h3><p>Construction years, addresses and building details: Syke's Ryhti building register. Building outlines: National Land Survey of Finland, Topographic Database (CC BY 4.0). Names and places inside buildings: © OpenStreetMap contributors. Photos: Wikimedia Commons. Basemap: OpenFreeMap and CARTO, © OpenMapTiles, © OpenStreetMap contributors.</p>
+      <h3>How to read it</h3><p>Years recorded as 1 January are often estimates and are drawn paler. Grey buildings have no match in the register, so their year is unknown.</p>
+      <h3>Made by</h3><p>Md Ariful Islam, <a href="https://arifultushar.online" target="_blank" rel="noopener">https://arifultushar.online</a></p>`,
+    use: { '1': 'Residential', '2': 'Commercial or public', '3': 'Holiday home', '5': 'Church building', '6': 'Sauna, shed or garage', '8': 'Church' },
+    titleMap: 'Jyväskylä: every building by year', titleList: 'All buildings, Jyväskylä'
+  },
+  fi: {
+    tagline: 'Jokainen rakennus valmistumisvuotensa mukaan', navMap: 'Kartta', navList: 'Kaikki rakennukset', navAbout: 'Tietoa', madeBy: 'Tekijä',
+    hint: 'Vedä kääntääksesi ja kallistaaksesi · Oikea painike tai Shift siirtää · Rulla zoomaa',
+    eras: 'Aikakaudet', showSheds: 'Näytä saunat, vajat ja autotallit', calm: 'Rauhallinen', fast: 'Nopea', close: 'Sulje',
+    loading: 'Kaupunkia rakennetaan…', today: 'Nyt', buildings: n => `${n} rakennusta`, play: 'Toista kaupungin kasvu', pause: 'Tauko', year: 'Vuosi',
+    toLight: 'Vaihda vaaleaan teemaan', toDark: 'Vaihda tummaan teemaan', langBtn: 'EN', langAria: 'In English',
+    openPage: 'Avaa rakennuksen sivu', building: 'Rakennus', yearUnknown: 'Vuosi tuntematon',
+    estimate: 'Merkitty 1. tammikuuta, joten vuosi on todennäköisesti arvio.',
+    floors: n => (n === 1 ? 'kerros' : 'kerrosta'), floorArea: 'm² kerrosalaa', footprint: 'm² pohja-alaa', homes: n => (n === 1 ? 'asunto' : 'asuntoa'), volume: 'm³ tilavuus', type: 'tyyppi',
+    holds: (n, a, b) => `Tämän pohjan alla on ${n} rekisteröityä rakennusta, valmistuneet ${a}–${b}.`,
+    secBuilding: 'Rakennus', rType: 'Tyyppi', rUse: 'Käyttö', rKind: 'Paikan laji',
+    secBuilt: 'Rakenne', rStructure: 'Kantava rakenne', rFacade: 'Julkisivu', rMethod: 'Rakennustapa',
+    secEnergy: 'Energia', rHeating: 'Lämmitystapa', rSource: 'Lämmönlähde',
+    secHeritage: 'Kulttuuriperintö', rProtected: 'Suojeltu', yes: 'Kyllä', rSignif: 'Merkitys',
+    secInside: 'Sisällä', secOther: 'Muut osoitteet', website: 'Verkkosivu', streetPhotos: 'Katukuvat',
+    twins: y => `Myös vuonna ${y} valmistuneita lähellä`, away: m => `${m} m päässä`, buildingId: 'Rakennustunnus', property: 'kiinteistö',
+    backMap: 'Takaisin kartalle', backList: 'Takaisin kaikkiin rakennuksiin', notFound: 'Rakennusta ei löytynyt',
+    notFoundText: id => `Tunnuksella ${id} ei löytynyt rakennusta. Etsi sitä kaikkien rakennusten listalta.`, scale: 'm',
+    listTitle: 'Kaikki rakennukset', listLede: (n, q) => `${n} rakennusta${q ? ` haulla ”${q}”` : ''}. Avaa rakennus nähdäksesi, milloin se valmistui, mistä se on tehty ja mitä sen sisällä on.`,
+    search: 'Hae kadun, nimen tai rakennustunnuksen mukaan', sortOld: 'Vanhimmat ensin', sortNew: 'Uusimmat ensin', sortName: 'Nimi A–Ö', sortBig: 'Suurimmat ensin', sortTall: 'Korkeimmat ensin',
+    noAddr: 'Näytä myös rakennukset ilman osoitetta', allEras: 'Kaikki aikakaudet', prev: 'Edellinen', next: 'Seuraava', page: (a, b) => `Sivu ${a} / ${b}`,
+    empty: 'Yhtään rakennusta ei löytynyt. Kokeile lyhyempää hakua tai toista aikakautta.', loadingNames: 'Ladataan nimiä ja osoitteita…',
+    loadError: e => `Rakennustiedot eivät latautuneet (${e}).<br>Aja <b>prepare_web_data.py</b>, käynnistä <b>serve.py</b> ja avaa <b>http://localhost:8001</b>.`,
+    credits: 'Aineistot: <a href="https://ryhti.syke.fi/" target="_blank" rel="noopener">Syke Ryhti</a>, <a href="https://www.maanmittauslaitos.fi/" target="_blank" rel="noopener">Maanmittauslaitos</a> (CC BY 4.0), <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMapin tekijät</a>. Taustakartta: OpenFreeMap, OpenMapTiles, CARTO.',
+    about: `<h2>Vuosirengas</h2>
+      <p>Puun runko kasvattaa yhden vuosirenkaan jokaista kasvuvuotta kohden. Tämä kartta tekee saman Jyväskylälle ja värittää jokaisen rakennuksen sen valmistumisvuoden mukaan.</p>
+      <p>Paina vuosikiekkoa, niin näet jokaisen rakennuksen satavan paikalleen valmistumisvuonnaan 1850-luvulta tähän päivään. Napsauta rakennusta lukeaksesi sen tarinan tai selaa kaikkia rakennuksia. Vedä kääntääksesi ja kallistaaksesi karttaa (aina suoraan ylhäältä katsottavaksi asti), siirrä oikealla painikkeella.</p>
+      <h3>Aineistot</h3><p>Valmistumisvuodet, osoitteet ja rakennustiedot: Suomen ympäristökeskuksen (Syke) Ryhti-rakennusrekisteri. Rakennusten pohjat: Maanmittauslaitoksen maastotietokanta (CC BY 4.0). Nimet ja paikat rakennusten sisällä: © OpenStreetMapin tekijät. Kuvat: Wikimedia Commons. Taustakartta: OpenFreeMap ja CARTO, © OpenMapTiles, © OpenStreetMapin tekijät.</p>
+      <h3>Näin luet karttaa</h3><p>1. tammikuuta merkityt vuodet ovat usein arvioita, ja ne näkyvät vaaleampina. Harmaat rakennukset puuttuvat rekisteristä, joten niiden ikä on tuntematon.</p>
+      <h3>Tekijä</h3><p>Md Ariful Islam, <a href="https://arifultushar.online" target="_blank" rel="noopener">https://arifultushar.online</a></p>`,
+    use: { '1': 'Asuinrakennus', '2': 'Liike- tai julkinen rakennus', '3': 'Lomarakennus', '5': 'Kirkollinen rakennus', '6': 'Sauna, vaja tai autotalli', '8': 'Kirkko' },
+    titleMap: 'Jyväskylä: jokainen rakennus vuosittain', titleList: 'Kaikki rakennukset, Jyväskylä'
+  }
+};
+// OpenStreetMap place kinds in Finnish
+const KIND_FI = { supermarket: 'ruokakauppa', convenience: 'lähikauppa', cafe: 'kahvila', restaurant: 'ravintola', 'fast food': 'pikaruoka', pub: 'pubi', bar: 'baari',
+  school: 'koulu', library: 'kirjasto', 'place of worship': 'kirkko', kindergarten: 'päiväkoti', pharmacy: 'apteekki', bank: 'pankki', hotel: 'hotelli', hostel: 'hostelli',
+  museum: 'museo', gallery: 'galleria', university: 'yliopisto', college: 'oppilaitos', hospital: 'sairaala', clinic: 'terveysasema', dentist: 'hammaslääkäri',
+  doctors: 'lääkäri', theatre: 'teatteri', cinema: 'elokuvateatteri', townhall: 'kaupungintalo', 'post office': 'posti', fuel: 'huoltoasema', clothes: 'vaatekauppa',
+  hairdresser: 'kampaamo', bakery: 'leipomo', florist: 'kukkakauppa', books: 'kirjakauppa', mall: 'kauppakeskus', 'department store': 'tavaratalo',
+  'sports centre': 'urheilukeskus', 'fitness centre': 'kuntosali', 'swimming pool': 'uimahalli', 'ice rink': 'jäähalli', stadium: 'stadion', 'community centre': 'yhteisötila',
+  'arts centre': 'kulttuurikeskus', 'concert hall': 'konserttitalo', company: 'yritys', government: 'virasto', retail: 'liikerakennus', commercial: 'liikerakennus',
+  apartments: 'kerrostalo', house: 'talo', church: 'kirkko', chapel: 'kappeli', cathedral: 'tuomiokirkko', police: 'poliisi', 'fire station': 'paloasema',
+  'car repair': 'autokorjaamo', optician: 'optikko', beauty: 'kauneushoitola', shoes: 'kenkäkauppa', electronics: 'elektroniikkaliike', furniture: 'huonekaluliike',
+  hardware: 'rautakauppa', kiosk: 'kioski', 'ice cream': 'jäätelöbaari', nightclub: 'yökerho', 'events venue': 'tapahtumapaikka', 'conference centre': 'kongressikeskus',
+  courthouse: 'oikeustalo', office: 'toimisto', industrial: 'teollisuusrakennus', warehouse: 'varasto', 'train station': 'rautatieasema' };
+/* ======================================================================================== */
+
+const TODAY = new Date().getFullYear(), LAST = TODAY + 1;
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const $ = id => document.getElementById(id);
+const hex = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+const mixTo = (c, t, w) => c.map((v, i) => Math.round(v + (t[i] - v) * w));
+const eraOf = y => (y == null ? -1 : ERAS.findIndex(e => y <= e.to));
+const RGB = ERAS.map(e => hex(e.color));
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const cap = s => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
+const url = p => CONFIG.base + p;
+
+const S = { year: TODAY, playing: false, rise: 0.01, speed: 1, focus: null, sheds: true, selected: -1, route: 'map',
+  theme: document.documentElement.dataset.theme, lang: document.documentElement.lang === 'fi' ? 'fi' : 'en' };
+const t = (k, ...a) => { const v = TXT[S.lang][k]; return typeof v === 'function' ? v(...a) : v; };
+const fmt = n => Number(n).toLocaleString(S.lang === 'fi' ? 'fi-FI' : 'en');
+const eraColor = i => (i < 0 ? (S.theme === 'dark' ? UNKNOWN.colorDark : UNKNOWN.color) : ERAS[i].color);
+const eraLabel = i => (i < 0 ? UNKNOWN.label : ERAS[i].label)[S.lang];
+const eraSub = i => (i < 0 ? UNKNOWN.sub : ERAS[i].sub)[S.lang];
+
+let all = [], shown = [], sortedYears = [], unknownCount = 0, details = null, byId = new Map(), byYear = new Map();
+let eraTotals = new Array(ERAS.length).fill(0), overlay = null, introDone = false, index = null;
+
+/* ---------------------------------- theme ---------------------------------- */
+const SUN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg>';
+const MOON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>';
+function themeColors() {
+  const dark = S.theme === 'dark';
+  return { bg: hex(dark ? '#121a2b' : '#f2ede1'), unknown: hex(eraColor(-1)), estTo: dark ? [140, 148, 170] : [246, 241, 228],
+    ink: dark ? [255, 255, 255] : [20, 26, 40],
+    tipBg: dark ? '#1d2537' : '#ffffff', tipInk: dark ? '#eceff6' : '#1c2433', tipLine: dark ? 'rgba(220,226,240,.15)' : 'rgba(28,36,51,.15)' };
+}
+let TC = themeColors();
+function lighting() {
+  const dark = S.theme === 'dark';
+  return new deck.LightingEffect({
+    ambient: new deck.AmbientLight({ color: [255, 255, 255], intensity: dark ? 0.85 : 1.05 }),
+    sun: new deck.DirectionalLight({ color: [255, 244, 228], intensity: dark ? 1.2 : 1.5, direction: [-2, -6, -4] }),
+    fill: new deck.DirectionalLight({ color: [200, 214, 255], intensity: dark ? 0.45 : 0.35, direction: [3, 4, -2] })
+  });
+}
+function setThemeButton() {
+  $('themeBtn').innerHTML = S.theme === 'dark' ? SUN : MOON;
+  $('themeBtn').setAttribute('aria-label', S.theme === 'dark' ? t('toLight') : t('toDark'));
+  $('themeBtn').title = $('themeBtn').getAttribute('aria-label');
+}
+function setTheme(th) {
+  S.theme = th; document.documentElement.dataset.theme = th; TC = themeColors();
+  try { localStorage.setItem('vr-theme', th); } catch (e) {}
+  setThemeButton(); loadBasemap();
+  if (overlay) { overlay.setProps({ effects: [lighting()] }); buildEras(); buildRibbon(); buildDial(); render(); rerenderPage(); }
+}
+$('themeBtn').addEventListener('click', () => setTheme(S.theme === 'dark' ? 'light' : 'dark'));
+
+/* ---------------------------------- language ---------------------------------- */
+function applyStatic() {
+  document.documentElement.lang = S.lang;
+  document.querySelectorAll('[data-t]').forEach(el => { el.textContent = t(el.dataset.t); });
+  $('langBtn').textContent = t('langBtn'); $('langBtn').setAttribute('aria-label', t('langAria')); $('langBtn').title = t('langAria');
+  setThemeButton();
+  $('credits').innerHTML = t('credits'); $('aboutBody').innerHTML = t('about');
+  $('slider').setAttribute('aria-label', t('year'));
+  $('dial').setAttribute('aria-label', S.playing ? t('pause') : t('play'));
+  document.querySelector('.speed').setAttribute('aria-label', S.lang === 'fi' ? 'Toistonopeus' : 'Film speed');
+}
+function setLang(lg) {
+  S.lang = lg; try { localStorage.setItem('vr-lang', lg); } catch (e) {}
+  applyStatic();
+  if (all.length) { index = null; buildEras(); updateDial(); rerenderPage(); }
+}
+$('langBtn').addEventListener('click', () => setLang(S.lang === 'fi' ? 'en' : 'fi'));
+function rerenderPage() {
+  delete $('list').dataset.built;
+  if (S.route === 'list') renderList();
+  else if (S.route === 'detail') route(true);
+  else if (S.selected >= 0 && $('drawer').style.display === 'block') openBuilding(all[S.selected]);
+  if (S.route === 'map') document.title = t('titleMap');
+}
+
+/* ---------------------------------- basemap: a real map with greenery ---------------------------------- */
+const map = new maplibregl.Map({ container: 'map', style: { version: 8, sources: {}, layers: [] }, center: CONFIG.center,
+  zoom: CONFIG.zoom, pitch: CONFIG.pitch, bearing: CONFIG.bearing, maxPitch: 85, attributionControl: false, dragRotate: true });
+let styleTry = 0;
+// diff:false makes the map always load the style in full, so 'style.load' fires and our colours are applied every time
+function loadBasemap() { styleTry = 0; map.setStyle(CONFIG.styles[S.theme][0], { diff: false }); }
+map.on('error', () => {
+  if (map.isStyleLoaded()) return;
+  const list = CONFIG.styles[S.theme];
+  styleTry++;
+  if (styleTry < list.length) map.setStyle(list[styleTry], { diff: false });
+  else if (styleTry === list.length) map.setStyle({ version: 8, sources: {}, layers: [{ id: 'bg', type: 'background', paint: { 'background-color': S.theme === 'dark' ? '#121a2b' : '#f2ede1' } }] });
+});
+// our own colours for the basemap: clear blue lakes, rich greens for forest and parks, warm land
+const BASE = {
+  light: { sky: '#cfe3f2', horizon: '#eef3f6', bg: '#f2ede1', res: '#ece4d3', other: '#ebe3d1', wood: '#8cc47a', park: '#a9db8c', grass: '#bfe3a0', wet: '#b7dcc8',
+    sand: '#f0dfa6', ice: '#e8f4fb', farm: '#e6e6bf', water: '#6fbbe8', waterText: '#2b6d9e', road: '#ffffff', major: '#ffd27a',
+    casing: '#dccfb6', majorCasing: '#e0a94a', path: '#e3d8c2', rail: '#b6ab98', boundary: '#b49cc8', text: '#4b5264', halo: '#ffffff' },
+  dark: { sky: '#16213a', horizon: '#2b3a5a', bg: '#121a2b', res: '#162034', other: '#172136', wood: '#123f2f', park: '#18523a', grass: '#174a37', wet: '#1a4a4c',
+    sand: '#3b3524', ice: '#243250', farm: '#1c2e2c', water: '#1b5f9c', waterText: '#86bdf0', road: '#2c3954', major: '#6a5528',
+    casing: '#111827', majorCasing: '#3f3218', path: '#232e45', rail: '#3b4763', boundary: '#5d5584', text: '#b8c1d8', halo: '#121a2b' }
+};
+function recolour() {
+  const C = BASE[S.theme];
+  // a soft sky and haze at the horizon, so a fully tilted view fades out like the Amsterdam map
+  try { map.setSky({ 'sky-color': C.sky, 'horizon-color': C.horizon, 'fog-color': C.bg, 'fog-ground-blend': 0.55, 'horizon-fog-blend': 0.7, 'sky-horizon-blend': 0.6, 'atmosphere-blend': 0 }); } catch (e) {}
+  for (const l of map.getStyle().layers || []) {
+    const id = l.id.toLowerCase(), src = (l['source-layer'] || '').toLowerCase();
+    const paint = (k, v) => { try { map.setPaintProperty(l.id, k, v); } catch (e) {} };
+    const hide = () => { try { map.setLayoutProperty(l.id, 'visibility', 'none'); } catch (e) {} };
+    if (/building/.test(id)) { hide(); continue; }            // our own 3D buildings replace these
+    if (/^poi|housenum|shield/.test(id)) { hide(); continue; }       // keep the map calm
+    const major = /motorway|trunk|primary/.test(id);
+    if (l.type === 'background') paint('background-color', C.bg);
+    else if (l.type === 'raster') paint('raster-opacity', 0.15);
+    else if (l.type === 'hillshade') hide();
+    else if (l.type === 'fill') {
+      let c = C.other, op = 1;
+      if (/water|ocean|lake|river/.test(id) || src === 'water') c = C.water;
+      else if (/wood|forest/.test(id)) c = C.wood;
+      else if (/park|nature|reserve|national/.test(id) || src === 'park') { c = C.park; op = 0.9; }
+      else if (/grass|meadow|pitch|golf|garden|cemetery|playground|recreation|scrub/.test(id)) c = C.grass;
+      else if (/wetland|bog|marsh/.test(id)) c = C.wet;
+      else if (/sand|beach/.test(id)) c = C.sand;
+      else if (/ice|glacier/.test(id)) c = C.ice;
+      else if (/farm|crop|agri|orchard/.test(id)) c = C.farm;
+      else if (/residential|suburb|neighbourhood|landuse/.test(id)) c = C.res;
+      if (/aeroway|runway|apron/.test(id)) c = C.path;
+      try { if (map.getPaintProperty(l.id, 'fill-pattern')) map.setPaintProperty(l.id, 'fill-pattern', null); } catch (e) {}
+      paint('fill-color', c); paint('fill-opacity', op); paint('fill-outline-color', 'rgba(0,0,0,0)');
+    } else if (l.type === 'line') {
+      if (/waterway|water|river|stream|canal/.test(id)) paint('line-color', C.water);
+      else if (/park_outline|landuse|landcover/.test(id)) hide();
+      else if (/boundary|admin/.test(id)) paint('line-color', C.boundary);
+      else if (/rail|transit|subway|tram/.test(id)) paint('line-color', C.rail);
+      else if (/casing/.test(id)) paint('line-color', major ? C.majorCasing : C.casing);
+      else if (/path|footway|pedestrian|track|cycle|steps|bridleway/.test(id)) paint('line-color', C.path);
+      else if (major) paint('line-color', C.major);
+      else if (/road|highway|street|minor|secondary|tertiary|link|service|bridge|tunnel|aeroway/.test(id)) paint('line-color', C.road);
+    } else if (l.type === 'symbol') {
+      paint('text-color', /water|lake|river|sea|ocean/.test(id) ? C.waterText : C.text);
+      paint('text-halo-color', C.halo); paint('icon-opacity', 0.6);
+    }
+  }
+}
+map.on('style.load', recolour);
+// safety net: if the colours were ever not applied, apply them once the map is idle
+map.on('idle', () => { try { if (map.getLayer('background') && map.getPaintProperty('background', 'background-color') !== BASE[S.theme].bg) recolour(); } catch (e) {} });
+
+/* ---------------------------------- rain animation (GPU) ----------------------------------
+   While the film plays, every building falls from the sky in the year it was finished, drifting in
+   at a slight slant, stretched like a raindrop, and eases softly down onto its footprint.
+   The hovered building lifts a little; the selected building pops up large out of its footprint. */
+const growModule = {
+  name: 'grow',
+  vs: `
+uniform growUniforms { float year; float rise; float playing; float hoverA; float hoverAAmt; float hoverB; float hoverBAmt; float sel; float selAmt; } grow;
+in vec3 growData;          // year built, floors, building index
+in vec2 growCenter;        // footprint centre (lon, lat)
+float grow_g;
+float grow_lift;
+float grow_sel;
+`,
+  inject: {
+    'vs:#main-start': `
+    grow_g = clamp((grow.year - growData.x + 1.0) / grow.rise, 0.0, 1.0);
+    grow_lift = 0.0;
+    if (abs(growData.z - grow.hoverA) < 0.5) grow_lift = max(grow_lift, grow.hoverAAmt);
+    if (abs(growData.z - grow.hoverB) < 0.5) grow_lift = max(grow_lift, grow.hoverBAmt);
+    grow_sel = abs(growData.z - grow.sel) < 0.5 ? grow.selAmt : 0.0;
+    `,
+    'vs:DECKGL_FILTER_GL_POSITION': `
+    if (grow_g < 0.002) {
+      position = vec4(2.0, 2.0, 2.0, 1.0);
+    } else {
+      vec4 p = geometry.position;
+      bool moved = false;
+      float top = step(1e-7, abs(p.z));                        // 1 for roof corners, 0 at the ground
+      vec3 c = project_position(vec3(growCenter, 0.0));
+      if (grow.playing > 0.5 && grow_g < 1.0) {               // rain: falls from the sky and lands softly
+        float seed = fract(sin(growData.z * 12.9898) * 43758.5453);
+        float e = pow(1.0 - grow_g, 2.6);
+        float h = max(project_size(70.0 + 60.0 * seed), project_pixel_size(45.0 + 40.0 * seed)) * e;   // a short drop, just above the roofs
+        p.z += h + top * h * 0.12;                              // stretched a little like a raindrop while falling
+        p.xy += vec2(0.12, -0.05) * h * (0.7 + 0.6 * fract(seed * 7.13));   // drifts in at a slight slant
+        moved = true;
+      }
+      if (grow_sel > 0.0) {                                     // selected: pop up large
+        float k = grow_sel;
+        float bounce = 1.0 + 0.10 * sin(k * 3.14159);
+        p.xy = c.xy + (p.xy - c.xy) * (1.0 + 0.3 * k * bounce);
+        p.z = p.z * (1.0 + 0.5 * k) + project_size(14.0 + growData.y * 2.0) * k * bounce;
+        moved = true;
+      } else if (grow_lift > 0.0) {                             // hovered: lift a little
+        p.z = p.z * (1.0 + 0.08 * grow_lift) + project_size(5.0) * grow_lift;
+        moved = true;
+      }
+      if (moved) position = project_common_position_to_clipspace(p);
+    }
+    `,
+    'vs:DECKGL_FILTER_COLOR': `
+    if (grow.playing > 0.5 && grow_g < 1.0) {
+      color.rgb = mix(color.rgb, vec3(1.0), 0.35 * pow(1.0 - grow_g, 2.0));   // a light sheen while falling
+    }
+    float b = max(0.16 * grow_lift, 0.22 * grow_sel);
+    if (b > 0.0) color.rgb = mix(color.rgb, vec3(1.0), b);
+    `
+  },
+  uniformTypes: { year: 'f32', rise: 'f32', playing: 'f32', hoverA: 'f32', hoverAAmt: 'f32', hoverB: 'f32', hoverBAmt: 'f32', sel: 'f32', selAmt: 'f32' },
+  getUniforms: o => (o && 'year' in o ? o : {})
+};
+class GrowExtension extends deck.LayerExtension {
+  getShaders() { return { modules: [growModule] }; }
+  initializeState() {
+    this.getAttributeManager()?.add({
+      growData: { size: 3, stepMode: 'dynamic', accessor: 'getGrowData' },
+      growCenter: { size: 2, stepMode: 'dynamic', accessor: 'getGrowCenter' }
+    });
+  }
+  draw() { if (this.props.growU) this.setShaderModuleProps({ grow: this.props.growU }); }
+}
+GrowExtension.extensionName = 'GrowExtension';
+GrowExtension.defaultProps = { getGrowData: { type: 'accessor', value: [0, 1, -1] }, getGrowCenter: { type: 'accessor', value: [0, 0] }, growU: null };
+const growExt = new GrowExtension();
+
+function colorFor(f) {
+  const p = f.properties, i = p.era;
+  if (S.focus !== null && i !== S.focus) return [...mixTo(i < 0 ? TC.unknown : RGB[i], TC.bg, 0.8), 130];
+  if (i < 0) return [...TC.unknown, 240];
+  return [...(p.e ? mixTo(RGB[i], TC.estTo, 0.15) : RGB[i]), 255];
+}
+
+/* hover / select: small tweens (the selected building springs up over ~0.6 s) */
+const H = { a: -1, aAmt: 0, b: -1, bAmt: 0, selAmt: 0 };
+let tweening = false, lastTween = 0;
+function setHover(i) {
+  if (i === H.a) return;
+  if (H.a >= 0) { H.b = H.a; H.bAmt = H.aAmt; }
+  H.a = i; H.aAmt = REDUCED ? 1 : 0;
+  if (!drag) map.getCanvas().style.cursor = i >= 0 ? 'pointer' : '';
+  kick();
+}
+function kick() { if (!tweening) { tweening = true; lastTween = 0; requestAnimationFrame(tween); } }
+function tween(now) {
+  const dt = lastTween ? Math.min(64, now - lastTween) : 16; lastTween = now;
+  const k = dt / 160;
+  if (H.a >= 0) H.aAmt = Math.min(1, H.aAmt + k);
+  if (H.b >= 0) { H.bAmt = Math.max(0, H.bAmt - k); if (H.bAmt === 0) H.b = -1; }
+  H.selAmt = S.selected >= 0 ? Math.min(1, H.selAmt + dt / 620) : 0;
+  if (!S.playing && overlay) overlay.setProps({ layers: layers() });
+  const busy = (H.a >= 0 && H.aAmt < 1) || H.b >= 0 || (S.selected >= 0 && H.selAmt < 1);
+  if (busy) requestAnimationFrame(tween); else tweening = false;
+}
+
+function layers() {
+  const atToday = !S.playing && S.year >= TODAY;
+  const sel = S.selected >= 0 ? all[S.selected] : null;
+  return [
+    sel && new deck.GeoJsonLayer({            // the empty socket under a selected building
+      id: 'socket', data: [sel], filled: true, stroked: true, extruded: false, pickable: false,
+      getFillColor: [...TC.ink, Math.round(50 * H.selAmt)], getLineColor: [...TC.ink, Math.round(220 * H.selAmt)],
+      lineWidthUnits: 'pixels', getLineWidth: 2,
+      updateTriggers: { getFillColor: [H.selAmt, S.theme], getLineColor: [H.selAmt, S.theme] }
+    }),
+    new deck.GeoJsonLayer({
+      id: 'buildings', data: shown, filled: true, stroked: false, extruded: true,
+      getElevation: f => Math.max(CONFIG.minHeight, f.properties.h * CONFIG.heightScale),
+      getFillColor: colorFor,
+      getGrowData: f => [f.properties.y ?? LAST, Math.max(1, Math.min(f.properties.s || Math.round(f.properties.h / 3) || 1, 30)), f.properties.i],
+      getGrowCenter: f => f.properties.c,
+      growU: { year: atToday ? LAST : S.year, rise: S.playing ? S.rise : 0.01, playing: S.playing && !REDUCED ? 1 : 0,
+               hoverA: H.a, hoverAAmt: H.aAmt, hoverB: H.b, hoverBAmt: H.bAmt, sel: S.selected, selAmt: H.selAmt },
+      extensions: [growExt],
+      material: { ambient: 0.5, diffuse: 0.6, shininess: 28, specularColor: [70, 70, 80] },
+      pickable: true,
+      onHover: info => setHover(info.object ? info.object.properties.i : -1),
+      updateTriggers: { getFillColor: [S.focus, S.theme] }
+    })
+  ];
+}
+function render() { if (overlay) overlay.setProps({ layers: layers() }); updateDial(); drawCursor(); }
+
+/* ---------------------------------- year dial ---------------------------------- */
+function visibleByEra() {
+  const counts = new Array(ERAS.length).fill(0);
+  const y = S.year >= TODAY && !S.playing ? Infinity : Math.floor(S.year);
+  for (const yy of sortedYears) { if (yy > y) break; counts[eraOf(yy)]++; }
+  return counts;
+}
+function buildDial() {
+  const r0 = 66, step = 4.2; let s = '';
+  ERAS.forEach((e, i) => {
+    const r = r0 + i * step, c = 2 * Math.PI * r;
+    s += `<circle cx="100" cy="100" r="${r}" fill="none" stroke="${e.color}" stroke-opacity=".18" stroke-width="3"/>
+          <circle id="ring${i}" cx="100" cy="100" r="${r}" fill="none" stroke="${e.color}" stroke-width="3" stroke-linecap="round" stroke-dasharray="0 ${c.toFixed(1)}" data-c="${c.toFixed(1)}"/>`;
+  });
+  $('rings').innerHTML = s; updateDial();
+}
+function updateDial() {
+  const v = visibleByEra();
+  ERAS.forEach((e, i) => {
+    const el = document.getElementById('ring' + i); if (!el) return;
+    const c = +el.dataset.c, frac = eraTotals[i] ? v[i] / eraTotals[i] : 0;
+    el.setAttribute('stroke-dasharray', `${(c * frac).toFixed(1)} ${c.toFixed(1)}`);
+  });
+  const now = S.year >= TODAY && !S.playing;
+  const total = v.reduce((a, b) => a + b, 0) + (now ? unknownCount : 0);
+  $('yr').textContent = now ? t('today') : Math.floor(Math.min(S.year, TODAY));
+  $('ct').textContent = t('buildings', fmt(total));
+}
+
+/* ---------------------------------- era panel ---------------------------------- */
+function buildEras() {
+  const items = ERAS.map((e, i) => ({ i, n: eraTotals[i] })).concat([{ i: -1, n: unknownCount }]);
+  $('eras').innerHTML = items.map(e => `
+    <button class="era${S.focus !== null && S.focus !== e.i ? ' dim' : ''}" type="button" data-i="${e.i}" aria-pressed="${S.focus === e.i}">
+      <span class="sw" style="background:${eraColor(e.i)}"></span><span><b>${eraLabel(e.i)}</b><small>${eraSub(e.i)}</small></span><span class="n">${fmt(e.n)}</span>
+    </button>`).join('');
+  $('eras').querySelectorAll('.era').forEach(b => b.addEventListener('click', () => {
+    const i = +b.dataset.i; S.focus = S.focus === i ? null : i; buildEras(); render();
+  }));
+}
+$('sheds').addEventListener('change', e => { S.sheds = e.target.checked; applyShown(); render(); });
+$('railBtn').addEventListener('click', () => { const o = $('rail').classList.toggle('open'); $('railBtn').setAttribute('aria-expanded', o); });
+function applyShown() { shown = S.sheds ? all : all.filter(f => f.properties.t !== '6'); }
+
+/* ---------------------------------- time ribbon ---------------------------------- */
+const X = y => ((Math.min(Math.max(y, CONFIG.startYear), TODAY) - CONFIG.startYear) / (TODAY - CONFIG.startYear)) * 1000;
+let ribbonWired = false;
+function buildRibbon() {
+  const s = $('slider');
+  s.min = CONFIG.startYear; s.max = TODAY; s.step = 1;
+  if (!ribbonWired) {
+    ribbonWired = true;
+    s.addEventListener('input', () => { stop(false); S.year = +s.value; render(); });
+    document.querySelectorAll('.speed button').forEach(b => b.addEventListener('click', () => {
+      S.speed = +b.dataset.speed;
+      document.querySelectorAll('.speed button').forEach(x => x.setAttribute('aria-pressed', x === b));
+      if (S.playing) { playT0 = filmPos(S.year); playStart = performance.now(); }
+    }));
+  }
+  const bins = new Map();
+  sortedYears.forEach(y => { const k = Math.max(y, CONFIG.startYear); bins.set(k, (bins.get(k) || 0) + 1); });
+  const vals = [...bins.values()].sort((a, b) => a - b), capV = vals[Math.floor(vals.length * 0.97)] || 1;
+  const w = 1000 / (TODAY - CONFIG.startYear + 1);
+  let bars = '';
+  bins.forEach((n, y) => {
+    const h = Math.max(1.5, Math.min(n / capV, 1) * 46);
+    bars += `<rect x="${X(y).toFixed(2)}" y="${(48 - h).toFixed(2)}" width="${Math.max(w * .78, .9).toFixed(2)}" height="${h.toFixed(2)}" rx=".6" fill="${ERAS[eraOf(y)].color}"/>`;
+  });
+  $('hist').setAttribute('viewBox', '0 0 1000 48');
+  $('hist').innerHTML = `<g>${bars}</g><rect id="future" x="0" y="0" width="0" height="48" style="fill:var(--panel-solid)" fill-opacity=".72"/>
+    <line id="cur" y1="0" y2="48" style="stroke:var(--accent)" stroke-width="2" vector-effect="non-scaling-stroke"/>`;
+  const step = innerWidth < 900 ? 50 : 25; let tk = '';
+  for (let y = Math.ceil(CONFIG.startYear / step) * step; y <= TODAY; y += step) tk += `<span style="left:${X(y) / 10}%">${y}</span>`;
+  $('ticks').innerHTML = tk;
+  drawCursor();
+}
+function drawCursor() {
+  const c = $('cur'); if (!c) return;
+  const x = S.year >= TODAY && !S.playing ? 1000 : X(S.year);
+  c.setAttribute('x1', x); c.setAttribute('x2', x);
+  $('future').setAttribute('x', x); $('future').setAttribute('width', Math.max(0, 1000 - x));
+  $('slider').value = Math.floor(Math.min(S.year, TODAY));
+}
+
+/* ---------------------------------- the film ---------------------------------- */
+let warp = [], playStart = 0, playT0 = 0, lastFrame = 0;
+function buildWarp() {
+  const y0 = CONFIG.startYear, n = Math.max(all.length, 1), per = new Array(LAST - y0 + 1).fill(0);
+  sortedYears.forEach(y => per[Math.min(Math.max(y, y0), LAST) - y0]++);
+  per[LAST - y0] += unknownCount;
+  let cum = 0;
+  warp = per.map((c, i) => { const v = 0.45 * i / (LAST - y0) + 0.55 * cum / n; cum += c; return v; });
+}
+function yearAt(x) {
+  if (x <= 0) return CONFIG.startYear;
+  const i = warp.findIndex(v => v > x);
+  if (i < 1) return LAST + 1;
+  return CONFIG.startYear + (i - 1) + (x - warp[i - 1]) / ((warp[i] - warp[i - 1]) || 1);
+}
+const filmPos = y => warp[Math.max(0, Math.min(warp.length - 1, Math.floor(y) - CONFIG.startYear))] || 0;
+let orbit = false, flying = false;
+function overview() {
+  const small = innerWidth < 900;
+  return { center: CONFIG.overview.center, zoom: CONFIG.overview.zoom - (small ? 1 : 0), pitch: CONFIG.overview.pitch, bearing: map.getBearing(),
+    padding: small ? { top: 60, bottom: 110, left: 0, right: 0 } : { top: 60, bottom: 120, left: 0, right: 290 } };
+}
+function tick(now) {
+  if (!S.playing) return;
+  const dur = CONFIG.filmMs / S.speed;
+  const x = Math.min(1, playT0 + Math.max(0, now - playStart) / dur);
+  S.year = yearAt(x);
+  S.rise = Math.max(1.0, yearAt(Math.min(1, x + 1500 / dur)) - S.year);
+  if (orbit && !REDUCED && !drag && !flying && lastFrame && now > playStart) map.setBearing(map.getBearing() + (now - lastFrame) * 0.0025);
+  lastFrame = now;
+  render(); updateBigYear();
+  if (x >= 1) { stop(true); return; }
+  requestAnimationFrame(tick);
+}
+function updateBigYear() {
+  const y = Math.floor(Math.min(S.year, TODAY)), i = eraOf(y);
+  $('byNum').textContent = y;
+  const tag = $('byEra'); tag.style.setProperty('--c', eraColor(i)); tag.querySelector('em').textContent = i >= 0 ? `${eraLabel(i)} · ${eraSub(i)}` : '';
+}
+function play() {
+  if (S.year >= TODAY) S.year = CONFIG.startYear;
+  closeDrawer();
+  // first fly out so the whole city is in view, then start building
+  const o = overview(), c = map.getCenter();
+  const far = map.getZoom() > o.zoom + 0.4 || Math.abs(c.lng - o.center[0]) > 0.04 || Math.abs(c.lat - o.center[1]) > 0.02 || map.getPitch() < 30;
+  const wait = far && !REDUCED ? 2300 : 0;
+  if (wait) {
+    flying = true;
+    map.flyTo({ ...o, duration: wait, essential: true, curve: 1.3 });
+    map.once('moveend', () => { flying = false; });
+  }
+  playT0 = filmPos(S.year); playStart = performance.now() + wait; lastFrame = 0; orbit = true;
+  S.playing = true; document.body.classList.add('playing');
+  $('pp').textContent = '❚❚'; $('dial').setAttribute('aria-label', t('pause'));
+  updateBigYear(); render();
+  requestAnimationFrame(tick);
+}
+function stop(toEnd) {
+  if (!S.playing) return;
+  S.playing = false; S.year = toEnd ? TODAY : Math.min(Math.round(S.year), TODAY);
+  document.body.classList.remove('playing');
+  $('pp').textContent = '▶'; $('dial').setAttribute('aria-label', t('play'));
+  render();
+}
+$('dial').addEventListener('click', () => (S.playing ? stop(false) : play()));
+
+/* ---------------------------------- mouse: drag to turn and tilt, right-drag to move ----------------------------------
+   Touch keeps the map's own gestures (one finger moves, two fingers turn and tilt). */
+let drag = null, dragMoved = false, eatClick = false;
+(function mouseControls() {
+  const el = $('map');
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  el.addEventListener('contextmenu', e => e.preventDefault());
+  el.addEventListener('pointerdown', e => { if (e.pointerType === 'mouse') e.stopPropagation(); }, true);
+  el.addEventListener('mousedown', e => {
+    e.stopPropagation();                                   // the map's own left-drag-to-move is replaced
+    if (e.button !== 0 && e.button !== 2) return;
+    e.preventDefault();
+    map.stop(); flying = false;
+    drag = { pan: e.button === 2 || e.shiftKey, x: e.clientX, y: e.clientY, lx: e.clientX, ly: e.clientY, b: map.getBearing(), p: map.getPitch() };
+    dragMoved = false;
+  }, true);
+  addEventListener('mousemove', e => {
+    if (!drag) return;
+    const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+    if (!dragMoved && Math.hypot(dx, dy) < 4) return;
+    if (!dragMoved) { dragMoved = true; orbit = false; el.classList.add(drag.pan ? 'panning' : 'turning'); }
+    if (drag.pan) map.panBy([drag.lx - e.clientX, drag.ly - e.clientY], { duration: 0, animate: false });
+    else map.jumpTo({ bearing: drag.b + dx * 0.35, pitch: clamp(drag.p - dy * 0.3, 0, 85) });
+    drag.lx = e.clientX; drag.ly = e.clientY;
+  });
+  addEventListener('mouseup', () => {
+    if (!drag) return;
+    drag = null; el.classList.remove('panning', 'turning');
+    if (dragMoved) { eatClick = true; setTimeout(() => { eatClick = false; }, 80); }
+  });
+  el.addEventListener('click', e => {
+    e.stopPropagation();
+    if (eatClick) { eatClick = false; return; }               // the end of a drag is not a click
+    if (!overlay) return;
+    const r = el.getBoundingClientRect();
+    const hit = overlay.pickObject({ x: e.clientX - r.left, y: e.clientY - r.top, radius: 3, layerIds: ['buildings'] });
+    if (hit && hit.object) openBuilding(hit.object);           // clicks are picked here, since the map's own press is replaced
+  }, true);
+  el.addEventListener('wheel', () => { orbit = false; }, { passive: true });
+})();
+
+
+/* ---------------------------------- building helpers ---------------------------------- */
+const DIRECT = true;                 // true: a click on a building opens its details page straight away
+const D = f => (details && details[f.properties.i]) || {};
+const idOf = f => f.properties.id || 'o' + f.properties.i;
+const pick = (d, k) => (S.lang === 'fi' ? d[k + 'F'] || d[k] : d[k] || d[k + 'F']);
+const kindTxt = k => (S.lang === 'fi' ? KIND_FI[k] || k : k);
+const insideTxt = s => s.split('; ').map(x => x.replace(/\(([^)]+)\)$/, (m, k) => `(${kindTxt(k)})`));
+const kdOk = d => d.kd && d.kd !== 'yes';
+const typeOf = (f, d = D(f)) => pick(d, 'cl') || (kdOk(d) && cap(kindTxt(d.kd))) || t('use')[f.properties.t] || null;
+const titleOf = (f, d = D(f)) => d.nm || d.ad || typeOf(f, d) || t('building');
+const yearTxt = p => (p.y == null ? t('yearUnknown') : (p.e ? 'c. ' : '') + p.y);
+const chip = i => `<span class="chip" style="--c:${eraColor(i)}"><i></i>${eraLabel(i)}</span>`;
+const pageUrl = f => url('/details_building-' + encodeURIComponent(idOf(f)));
+function statsHtml(f, d, full) {
+  const p = f.properties;
+  const items = [
+    p.s && [fmt(p.s), t('floors', p.s)],
+    (d.gfa || d.fa) && [fmt(d.gfa || d.fa), t('floorArea')],
+    (full || !(d.gfa || d.fa)) && p.a && [fmt(p.a), t('footprint')],
+    d.ap && [fmt(d.ap), t('homes', d.ap)],
+    full && d.vol && [fmt(d.vol), t('volume')],
+    !full && !d.ap && typeOf(f, d) && [esc(typeOf(f, d)), t('type')]
+  ].filter(Boolean).slice(0, full ? 6 : 3);
+  return items.length ? `<div class="stats">${items.map(([v, l]) => `<div><b>${v}</b><span>${l}</span></div>`).join('')}</div>` : '';
+}
+
+/* ---------------------------------- drawer (map view) ---------------------------------- */
+function openBuilding(f) {
+  if (DIRECT) { if (S.playing) stop(false); go('/details_building-' + encodeURIComponent(idOf(f))); return; }   // click opens the details page
+  if (S.route !== 'map') { go('/details_building-' + encodeURIComponent(idOf(f))); return; }
+  stop(false);
+  if (S.selected !== f.properties.i) H.selAmt = REDUCED ? 1 : 0;
+  S.selected = f.properties.i; kick(); render();
+  const p = f.properties, d = D(f);
+  $('drawer').innerHTML = `
+    <button class="x" type="button" aria-label="${t('close')}">×</button>
+    <div class="bname">${esc(titleOf(f, d))}</div>
+    ${d.ad && d.nm ? `<div class="baddr">${esc(d.ad)}</div>` : d.pc ? `<div class="baddr">${esc(d.pc)}</div>` : ''}
+    <div class="byear">${yearTxt(p)}</div>
+    ${chip(p.era)} ${p.e ? `<p class="est">${t('estimate')}</p>` : ''}
+    ${statsHtml(f, d, false)}
+    <a class="btn" href="${pageUrl(f)}" data-link>${t('openPage')}</a>`;
+  $('drawer').style.display = 'block'; $('rail').style.visibility = 'hidden';
+  $('drawer').querySelector('.x').onclick = closeDrawer;
+}
+function closeDrawer() {
+  $('drawer').style.display = 'none'; $('rail').style.visibility = '';
+  if (S.route === 'map' && S.selected >= 0) { S.selected = -1; H.selAmt = 0; render(); }
+}
+
+/* ---------------------------------- footprint drawing (detail page) ---------------------------------- */
+function planSvg(f) {
+  const g = f.geometry, polys = g.type === 'MultiPolygon' ? g.coordinates : [g.coordinates];
+  const [cx, cy] = f.properties.c, kx = 111320 * Math.cos(cy * Math.PI / 180), ky = 110540;
+  const P = polys.map(poly => poly.map(ring => ring.map(([x, y]) => [(x - cx) * kx, -(y - cy) * ky])));
+  const flat = P.flat(2);
+  const minX = Math.min(...flat.map(q => q[0])), maxX = Math.max(...flat.map(q => q[0]));
+  const minY = Math.min(...flat.map(q => q[1])), maxY = Math.max(...flat.map(q => q[1]));
+  const W = 480, Hh = 190, pad = 38, sc = Math.min((W - pad * 2) / (maxX - minX || 1), (Hh - pad * 2) / (maxY - minY || 1));
+  const ox = (W - (maxX - minX) * sc) / 2 - minX * sc, oy = (Hh - (maxY - minY) * sc) / 2 - minY * sc;
+  const d = P.map(poly => poly.map(ring => 'M' + ring.map(([x, y]) => `${(x * sc + ox).toFixed(1)},${(y * sc + oy).toFixed(1)}`).join('L') + 'Z').join('')).join('');
+  const nice = [2, 5, 10, 20, 50, 100, 200, 500].find(m => m * sc >= 50) || 500, bar = nice * sc;
+  const col = eraColor(f.properties.era);
+  return `<div class="plan" role="img" aria-label="${esc(titleOf(f))}"><svg viewBox="0 0 ${W} ${Hh}" preserveAspectRatio="xMidYMid meet">
+    <path d="${d}" fill="${col}" fill-opacity=".85" fill-rule="evenodd" stroke="${col}" stroke-width="2" stroke-linejoin="round"/>
+    <g transform="translate(22 ${Hh - 22})" style="fill:var(--muted);stroke:var(--muted)" font-size="11" font-family="Instrument Sans, sans-serif">
+      <line x1="0" y1="0" x2="${bar.toFixed(1)}" y2="0" stroke-width="2"/><line x1="0" y1="-4" x2="0" y2="4" stroke-width="2"/><line x1="${bar.toFixed(1)}" y1="-4" x2="${bar.toFixed(1)}" y2="4" stroke-width="2"/>
+      <text x="${(bar + 8).toFixed(1)}" y="4" stroke="none">${nice} ${t('scale')}</text></g>
+    <g transform="translate(${W - 30} 30)" style="fill:var(--muted)" font-size="11" font-family="Instrument Sans, sans-serif">
+      <path d="M0,-12 L5,4 L0,0 L-5,4 Z"/><text x="0" y="17" text-anchor="middle">N</text></g></svg></div>`;
+}
+async function wikiPhoto(qid) {
+  try {
+    const r = await fetch(`https://www.wikidata.org/w/api.php?action=wbgetclaims&entity=${encodeURIComponent(qid)}&property=P18&format=json&origin=*`);
+    const file = (await r.json()).claims?.P18?.[0]?.mainsnak?.datavalue?.value;
+    return file ? encodeURIComponent(file.replace(/ /g, '_')) : null;
+  } catch (e) { return null; }
+}
+const dist2 = (a, b) => { const dx = (a[0] - b[0]) * Math.cos(b[1] * Math.PI / 180), dy = a[1] - b[1]; return dx * dx + dy * dy; };
+
+/* ---------------------------------- detail page ---------------------------------- */
+let lastDetailId = null;
+function renderDetail(id) {
+  const f = byId.get(id), el = $('detail');
+  if (!f) {
+    el.innerHTML = `<div class="inner"><a class="back" href="${url('/all-buildings')}" data-link>${t('backList')}</a>
+      <h1>${t('notFound')}</h1><p>${esc(t('notFoundText', id))}</p></div>`;
+    return;
+  }
+  const p = f.properties, d = D(f);
+  if (S.selected !== p.i) H.selAmt = REDUCED ? 1 : 0;
+  S.selected = p.i; kick();
+  if (!S.playing && (p.y == null || S.year < p.y)) S.year = TODAY;
+  render();
+  if (lastDetailId !== id) {
+    lastDetailId = id;
+    const fly = REDUCED ? 0 : 1700;
+    const zoom = Math.max(16.2, Math.min(18.2, 18.4 - Math.log2(Math.sqrt(p.a || 200) / 12)));   // small buildings: come closer
+    map.flyTo({ center: p.c, zoom, pitch: 55, bearing: map.getBearing() + 20, duration: fly, essential: true,
+      padding: innerWidth > 900 ? { left: 520, top: 60, right: 40, bottom: 120 } : { bottom: innerHeight * .6 } });
+    if (fly) setTimeout(() => { if (S.selected === p.i) { H.selAmt = 0; kick(); } }, fly - 150);   // pop up as the camera arrives
+  }
+  const row = (k, v) => (v == null || v === '' ? '' : `<dt>${k}</dt><dd>${v}</dd>`);
+  const sec = (h, rows) => (rows.trim() ? `<h2>${h}</h2><dl>${rows}</dl>` : '');
+  const others = d.aa ? d.aa.split('; ').filter(a => a !== d.ad) : [];
+  const wp = d.wp ? (() => { const [l, ...x] = d.wp.split(':'); return `https://${l}.wikipedia.org/wiki/${encodeURIComponent(x.join(':').replace(/ /g, '_'))}`; })() : null;
+  const [lon, lat] = p.c;
+  const twins = p.y == null ? [] : (byYear.get(p.y) || []).filter(x => x !== f).map(x => ({ f: x, d: dist2(x.properties.c, p.c) })).sort((a, b) => a.d - b.d).slice(0, 6);
+  const v = k => { const x = pick(d, k); return x ? esc(x) : null; };
+
+  el.innerHTML = `
+    <div class="photo" id="dPhoto">${planSvg(f)}</div>
+    <div class="inner">
+      <a class="back" href="${url('/')}" data-link>${t('backMap')}</a>
+      <h1>${esc(titleOf(f, d))}</h1>
+      ${d.nm && d.ad ? `<div class="baddr">${esc(d.ad)}${d.pc ? ', ' + esc(d.pc) : ''}</div>` : d.pc ? `<div class="baddr">${esc(d.pc)}</div>` : ''}
+      <div class="byear">${yearTxt(p)}</div>
+      ${chip(p.era)}
+      ${p.e ? `<p class="est">${t('estimate')}</p>` : ''}
+      ${d.y0 && d.y1 && d.y0 !== d.y1 ? `<p class="est">${t('holds', p.n, d.y0, d.y1)}</p>` : ''}
+      ${statsHtml(f, d, true)}
+      ${sec(t('secBuilding'), row(t('rType'), esc(typeOf(f, d) || '')) + row(t('rUse'), v('us')) + row(t('rKind'), kdOk(d) && d.nm ? esc(cap(kindTxt(d.kd))) : null))}
+      ${sec(t('secBuilt'), row(t('rStructure'), v('lb')) + row(t('rFacade'), v('fm')) + row(t('rMethod'), v('cm')))}
+      ${sec(t('secEnergy'), row(t('rHeating'), v('hm')) + row(t('rSource'), v('he')))}
+      ${sec(t('secHeritage'), row(t('rProtected'), d.pr ? t('yes') : null) + row(t('rSignif'), v('ch')))}
+      ${d.in ? `<h2>${t('secInside')}</h2><ul>${insideTxt(d.in).map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}
+      ${others.length ? `<h2>${t('secOther')}</h2><p>${others.map(esc).join(', ')}</p>` : ''}
+      <div class="links">
+        ${wp ? `<a href="${wp}" target="_blank" rel="noopener">Wikipedia</a>` : ''}
+        ${d.ws ? `<a href="${esc(d.ws)}" target="_blank" rel="noopener">${t('website')}</a>` : ''}
+        <a href="https://www.mapillary.com/app/?lat=${lat}&lng=${lon}&z=18" target="_blank" rel="noopener">${t('streetPhotos')}</a>
+        <a href="https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${lat},${lon}" target="_blank" rel="noopener">Street View</a>
+        ${d.osm ? `<a href="${d.osm}" target="_blank" rel="noopener">OpenStreetMap</a>` : ''}
+      </div>
+      ${twins.length ? `<h2>${t('twins', p.y)}</h2><div class="twins">${twins.map(x =>
+        `<a href="${pageUrl(x.f)}" data-link>${esc(titleOf(x.f))}<span>${t('away', fmt(Math.round(Math.sqrt(x.d) * 111320)))}</span></a>`).join('')}</div>` : ''}
+      <div class="ids">${t('buildingId')} ${esc(p.id || '—')}${d.pid ? ', ' + t('property') + ' ' + esc(d.pid) : ''}</div>
+    </div>`;
+  el.scrollTop = 0;
+  document.title = `${titleOf(f, d)}, Jyväskylä`;
+  if (d.wd) wikiPhoto(d.wd).then(n => { const box = $('dPhoto'); if (n && box && lastDetailId === id) box.innerHTML =
+    `<a href="https://commons.wikimedia.org/wiki/File:${n}" target="_blank" rel="noopener" title="Wikimedia Commons"><img src="https://commons.wikimedia.org/wiki/Special:FilePath/${n}?width=900" alt="${esc(titleOf(f, d))}"></a>`; });
+}
+
+/* ---------------------------------- all buildings ---------------------------------- */
+const L = { q: '', era: null, sort: 'old', noAddr: false, page: 0 };
+function buildIndex() {
+  index = all.map(f => {
+    const p = f.properties, d = D(f);
+    return { f, p, title: titleOf(f, d), sub: [d.nm ? d.ad : null, typeOf(f, d)].filter(Boolean).join(', '),
+      key: [d.nm, d.ad, d.aa, p.id, d.kd, d.in].filter(Boolean).join(' ').toLowerCase(), has: !!(d.ad || d.nm), area: d.gfa || p.a || 0 };
+  });
+}
+function renderList() {
+  const el = $('list');
+  if (!el.dataset.built) {
+    el.dataset.built = '1';
+    el.innerHTML = `<div class="wrap">
+      <h1>${t('listTitle')}</h1><p class="lede" id="lede"></p>
+      <div class="controls">
+        <input type="search" id="q" placeholder="${t('search')}" aria-label="${t('search')}" value="${esc(L.q)}">
+        <select id="sort" aria-label="Sort">${['Old', 'New', 'Name', 'Big', 'Tall'].map(k => `<option value="${k.toLowerCase()}"${L.sort === k.toLowerCase() ? ' selected' : ''}>${t('sort' + k)}</option>`).join('')}</select>
+        <label class="toggle" style="margin:0"><input type="checkbox" id="noAddr"${L.noAddr ? ' checked' : ''}> ${t('noAddr')}</label>
+      </div>
+      <div class="chips" id="chips"></div>
+      <div class="rows" id="rows"></div>
+      <div class="pager"><button type="button" id="prev">${t('prev')}</button><span id="pinfo"></span><button type="button" id="next">${t('next')}</button></div>
+    </div>`;
+    const chips = [{ i: null, label: t('allEras'), color: 'var(--ink)' }, ...ERAS.map((e, i) => ({ i, label: eraLabel(i), color: eraColor(i) })), { i: -1, label: eraLabel(-1), color: eraColor(-1) }];
+    $('chips').innerHTML = chips.map(c => `<button type="button" data-i="${c.i}" aria-pressed="${c.i === L.era}"><i style="background:${c.color}"></i>${c.label}</button>`).join('');
+    $('chips').querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+      L.era = b.dataset.i === 'null' ? null : +b.dataset.i; L.page = 0;
+      $('chips').querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x === b)); renderRows();
+    }));
+    let tm; $('q').addEventListener('input', e => { clearTimeout(tm); tm = setTimeout(() => { L.q = e.target.value.trim().toLowerCase(); L.page = 0; renderRows(); }, 160); });
+    $('sort').addEventListener('change', e => { L.sort = e.target.value; L.page = 0; renderRows(); });
+    $('noAddr').addEventListener('change', e => { L.noAddr = e.target.checked; L.page = 0; renderRows(); });
+    $('prev').addEventListener('click', () => { L.page--; renderRows(); el.scrollTop = 0; });
+    $('next').addEventListener('click', () => { L.page++; renderRows(); el.scrollTop = 0; });
+  }
+  renderRows();
+  document.title = t('titleList');
+}
+function renderRows() {
+  if (!details) { $('rows').innerHTML = `<p class="empty">${t('loadingNames')}</p>`; $('lede').textContent = ''; return; }
+  if (!index) buildIndex();
+  const r = index.filter(x => (L.noAddr || x.has) && (L.era === null || x.p.era === L.era) && (!L.q || x.key.includes(L.q)));
+  const by = { old: (a, b) => (a.p.y ?? 1e4) - (b.p.y ?? 1e4), new: (a, b) => (b.p.y ?? -1) - (a.p.y ?? -1),
+    name: (a, b) => a.title.localeCompare(b.title, 'fi'), big: (a, b) => b.area - a.area, tall: (a, b) => (b.p.h || 0) - (a.p.h || 0) };
+  r.sort(by[L.sort]);
+  const pages = Math.max(1, Math.ceil(r.length / CONFIG.pageSize));
+  L.page = Math.min(Math.max(0, L.page), pages - 1);
+  const slice = r.slice(L.page * CONFIG.pageSize, (L.page + 1) * CONFIG.pageSize);
+  $('lede').textContent = t('listLede', fmt(r.length), L.q);
+  $('rows').innerHTML = slice.length ? slice.map(x => `
+    <a href="${pageUrl(x.f)}" data-link>
+      <span class="sw" style="background:${eraColor(x.p.era)}"></span>
+      <span class="t"><b>${esc(x.title)}</b><span>${esc(x.sub || '')}</span></span>
+      <span class="fl">${x.p.s ? fmt(x.p.s) + ' ' + t('floors', x.p.s) : ''}</span>
+      <span class="y">${x.p.y ?? '—'}</span>
+    </a>`).join('') : `<p class="empty">${t('empty')}</p>`;
+  $('pinfo').textContent = t('page', L.page + 1, fmt(pages));
+  $('prev').disabled = L.page === 0; $('next').disabled = L.page >= pages - 1;
+}
+
+/* ---------------------------------- router ---------------------------------- */
+function go(path) { history.pushState({}, '', url(path)); route(); }
+document.addEventListener('click', e => {
+  const a = e.target.closest('a[data-link]');
+  if (!a || e.metaKey || e.ctrlKey || e.shiftKey || a.target === '_blank') return;
+  e.preventDefault(); history.pushState({}, '', a.getAttribute('href')); route();
+});
+addEventListener('popstate', () => route());
+function route(redraw) {
+  const path = decodeURIComponent(location.pathname.slice(CONFIG.base.length) || '/');
+  const m = path.match(/^\/details_building-(.+)$/);
+  S.route = m ? 'detail' : path.startsWith('/all-buildings') ? 'list' : 'map';
+  document.body.dataset.route = S.route;
+  document.querySelectorAll('[data-nav]').forEach(a => { if (a.dataset.nav === S.route) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+  $('detail').style.display = S.route === 'detail' ? 'block' : 'none';
+  $('list').style.display = S.route === 'list' ? 'block' : 'none';
+  $('drawer').style.display = 'none'; $('rail').style.visibility = '';
+  if (!all.length) return;
+  if (S.route !== 'detail') lastDetailId = null;
+  if (S.playing) stop(true);                       // leaving the film: show the city as it is today
+  if (S.route === 'detail') { renderDetail(m[1]); }
+  else if (S.route === 'list') { S.selected = -1; render(); renderList(); }
+  else { if (S.selected >= 0) { S.selected = -1; render(); } document.title = t('titleMap'); }
+}
+
+/* ---------------------------------- about ---------------------------------- */
+$('aboutBtn').addEventListener('click', () => $('about').showModal());
+$('aboutClose').addEventListener('click', () => $('about').close());
+addEventListener('keydown', e => { if (e.key === 'Escape' && S.route === 'map') closeDrawer(); });
+
+/* ---------------------------------- start ---------------------------------- */
+document.querySelectorAll('a[data-link]').forEach(a => { const h = a.getAttribute('href'); if (h && h.startsWith('/') && CONFIG.base && !h.startsWith(CONFIG.base + '/') && h !== CONFIG.base) a.setAttribute('href', url(h)); });   // header links follow the folder
+applyStatic();
+loadBasemap();
+fetch(url(CONFIG.data))
+  .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+  .then(geo => {
+    all = geo.features;
+    all.forEach((f, i) => {
+      const p = f.properties; p.i = i; p.era = eraOf(p.y);
+      const g = f.geometry, ring = g.type === 'MultiPolygon' ? g.coordinates[0][0] : g.coordinates[0];
+      const s = ring.reduce((a, c) => [a[0] + c[0], a[1] + c[1]], [0, 0]); p.c = [s[0] / ring.length, s[1] / ring.length];
+      byId.set(p.id || 'o' + i, f); if (p.id) byId.set('o' + i, f);
+      if (p.y != null) { if (!byYear.has(p.y)) byYear.set(p.y, []); byYear.get(p.y).push(f); }
+    });
+    sortedYears = all.map(f => f.properties.y).filter(y => y != null).sort((a, b) => a - b);
+    unknownCount = all.length - sortedYears.length;
+    sortedYears.forEach(y => eraTotals[eraOf(y)]++);
+    applyShown(); buildDial(); buildEras(); buildRibbon(); buildWarp();
+    overlay = new deck.MapboxOverlay({
+      interleaved: false, layers: layers(), effects: [lighting()],
+      getTooltip: ({ object: o }) => o && {
+        html: `<b>${esc(titleOf(o))}</b><br>${yearTxt(o.properties)}`,
+        style: { background: TC.tipBg, color: TC.tipInk, border: `1px solid ${TC.tipLine}`, borderRadius: '10px', padding: '6px 10px', fontSize: '12.5px', fontFamily: 'Instrument Sans, sans-serif' }
+      }
+    });
+    map.addControl(overlay);
+    route();
+    $('loading').style.opacity = 0; setTimeout(() => $('loading').remove(), 650);
+    fetch(url(CONFIG.details)).then(r => (r.ok ? r.json() : null)).then(d => {
+      details = d; index = null;
+      if (S.route === 'list') renderRows();
+      if (S.route === 'detail') route(true);
+    }).catch(() => {});
+    if (S.route === 'map' && !REDUCED && !introDone) {     // first visit: the city builds itself once
+      introDone = true; S.year = CONFIG.startYear; const keep = S.speed; S.speed = 2;
+      setTimeout(play, 500);
+      setTimeout(() => { S.speed = keep; }, 3000 + CONFIG.filmMs / 2 + 300);
+    }
+  })
+  .catch(err => { $('loadingText').innerHTML = t('loadError', esc(err.message)); });
+</script>
+</body>
+</html>

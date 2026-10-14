@@ -1,0 +1,5 @@
+{
+  "rewrites": [
+    { "source": "/jyvaskyla-buildings/:path*", "destination": "/jyvaskyla-buildings/index.html" }
+  ]
+}

@@ -2,6 +2,7 @@ const fs = require("fs");
 
 module.exports = function (eleventyConfig) {
   // ---- Passthrough: static assets ----
+  eleventyConfig.addPassthroughCopy("jyvaskyla-buildings"); // Jyväskylä buildings map, served at /jyvaskyla-buildings/
   eleventyConfig.addPassthroughCopy({ "src/assets": "assets" });
   eleventyConfig.addPassthroughCopy({ "content/blog/images": "assets/blog" });
 
