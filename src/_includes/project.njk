@@ -37,6 +37,12 @@ layout: base.njk
     <img class="detail__cover" src="/assets/projects/{{ page.fileSlug }}/{{ cover }}" alt="{{ title }}" />
     {% endif %}
 
+    {% if video %}
+    <video class="detail__video" controls preload="metadata" playsinline>
+      <source src="/assets/projects/{{ page.fileSlug }}/{{ video }}" type="video/mp4" />
+    </video>
+    {% endif %}
+
     {% if gallery %}
     <div class="detail__gallery">
       {% for img in gallery %}

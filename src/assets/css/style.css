@@ -1067,6 +1067,14 @@ a {
   border: 1px solid var(--border);
   margin-bottom: 2rem;
 }
+.detail__video {
+  display: block;
+  width: 100%;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  margin-bottom: 2rem;
+  background: #000;
+}
 .detail__gallery {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));

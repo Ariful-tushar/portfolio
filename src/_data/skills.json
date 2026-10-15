@@ -76,6 +76,19 @@
     ]
   },
   {
+    "group": "Geospatial & Data Visualization",
+    "icon": "map-pin",
+    "items": [
+      "GeoPandas",
+      "Shapely",
+      "pandas",
+      "Geospatial Data Processing",
+      "MapLibre GL JS",
+      "deck.gl",
+      "WebGL/GLSL Shaders"
+    ]
+  },
+  {
     "group": "Databases",
     "icon": "cat-backend",
     "items": ["SQL", "PostgreSQL", "MongoDB"]
