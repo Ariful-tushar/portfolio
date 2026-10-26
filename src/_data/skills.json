@@ -21,11 +21,13 @@
     "items": [
       "LLMs",
       "RAG",
+      "Multi-Agent Systems",
       "LangChain",
       "LangGraph",
       "MCP (Model Context Protocol)",
       "Prompt Engineering",
       "LLM Orchestration",
+      "LLM-as-Judge Evaluation",
       "OpenAI API",
       "Claude API"
     ]
@@ -56,6 +58,7 @@
       "Express",
       "REST APIs",
       "SQLAlchemy",
+      "Alembic",
       "Pydantic",
       "Google Sheets API",
       "JSON",
@@ -67,7 +70,9 @@
     "icon": "cat-frontend",
     "items": [
       "React",
+      "TypeScript",
       "JavaScript",
+      "Vite",
       "React Router",
       "Tailwind CSS",
       "Material UI (MUI)",
@@ -91,12 +96,12 @@
   {
     "group": "Databases",
     "icon": "cat-backend",
-    "items": ["SQL", "PostgreSQL", "MongoDB"]
+    "items": ["SQL", "PostgreSQL", "MongoDB", "pgvector"]
   },
   {
     "group": "DevOps & Tooling",
     "icon": "cat-devops",
-    "items": ["Git", "Docker", "Azure DevOps", "CI/CD", "Firebase", "HTML test fixtures"]
+    "items": ["Git", "Docker", "Azure DevOps", "GitHub Actions", "CI/CD", "Firebase", "Vercel", "HTML test fixtures"]
   },
   {
     "group": "IoT & Edge",
